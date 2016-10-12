@@ -9,7 +9,6 @@ Windows上C++封装的HTTP库，包含三种实现模式（WinInet、WinHttp、s
 接口类声明：
 
 class IHttpBase
-
 {
 public:
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
@@ -20,9 +19,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
-
 //HTTP请求接口类
-
 class IWininetHttp
 	:public IHttpBase
 {
@@ -34,25 +31,19 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
-
 //HTTP socket类
 
 
 class ISocketHttp
-
 	:public IHttpBase
-	
 {
 public:
 	virtual LPCWSTR	GetIpAddr()const= 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
-
 //WinHttp类
-
 class IWinHttp
-
 	: public IWininetHttp
 {
 public:
