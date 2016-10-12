@@ -46,4 +46,5 @@ public:
 	//设置超时时间，单位：毫秒
 	virtual void	SetTimeOut(int dwConnectTime,  int dwSendTime, int dwRecvTime)= 0;		
 };
+
 能力有限，有bug欢迎指针 email:jelinyao@163.com
