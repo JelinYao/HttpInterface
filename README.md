@@ -1,10 +1,15 @@
 # HttpInterface
+
 Windows上C++封装的HTTP库，包含三种实现模式（WinInet、WinHttp、socket）
+
 主要实现了HTTP的get\post方法，下载到内存、下载到本地文件，回调下载进度等接口
+
 测试程序中展现了常用的几个方法。
 
 接口类声明：
+
 class IHttpBase
+
 {
 public:
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
@@ -15,7 +20,9 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
+
 //HTTP请求接口类
+
 class IWininetHttp
 	:public IHttpBase
 {
@@ -27,19 +34,25 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
+
 //HTTP socket类
 
 
 class ISocketHttp
+
 	:public IHttpBase
+	
 {
 public:
 	virtual LPCWSTR	GetIpAddr()const= 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
+
 //WinHttp类
+
 class IWinHttp
+
 	: public IWininetHttp
 {
 public:
