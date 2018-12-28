@@ -8,14 +8,14 @@
 
 /////////////////////////////////////////////////////////////////////////
 
-CHttpSocket::CHttpHeader::CHttpHeader( const char* pHeader )
-:m_uReturnValue(0)
+CHttpSocket::CHttpHeader::CHttpHeader(const char* pHeader)
+	:m_uReturnValue(0)
 {
 	Revolse(std::string(pHeader));
 }
 
-CHttpSocket::CHttpHeader::CHttpHeader( const std::string& strHeader )
-:m_uReturnValue(0)
+CHttpSocket::CHttpHeader::CHttpHeader(const std::string& strHeader)
+	: m_uReturnValue(0)
 {
 	Revolse(strHeader);
 }
@@ -24,53 +24,52 @@ CHttpSocket::CHttpHeader::~CHttpHeader(void)
 {
 }
 
-std::string CHttpSocket::CHttpHeader::GetValue( const std::string& strKey )
+std::string CHttpSocket::CHttpHeader::GetValue(const std::string& strKey)
 {
 	std::string strResult;
 	std::map<std::string, std::string>::const_iterator itor;
-	itor=m_ValueMap.find(strKey);
-	if ( itor != m_ValueMap.end() )
-		strResult=itor->second;
+	itor = m_ValueMap.find(strKey);
+	if (itor != m_ValueMap.end())
+		strResult = itor->second;
 	return strResult;
 }
 
-bool CHttpSocket::CHttpHeader::Revolse( const std::string& strHeader )
+bool CHttpSocket::CHttpHeader::Revolse(const std::string& strHeader)
 {
-	int nStartPos=0, nFindPos=0, nLineIndex=0;
+	int nStartPos = 0, nFindPos = 0, nLineIndex = 0;
 	std::string strLine, strKey, strValue;
 	do
 	{
-		nFindPos=strHeader.find("\r\n", nStartPos);
-		if ( -1 == nFindPos )
-			strLine=strHeader.substr(nStartPos, strHeader.size()-nStartPos);
+		nFindPos = strHeader.find("\r\n", nStartPos);
+		if (-1 == nFindPos)
+			strLine = strHeader.substr(nStartPos, strHeader.size() - nStartPos);
 		else
 		{
-			strLine=strHeader.substr(nStartPos, nFindPos-nStartPos);
-			nStartPos=nFindPos+2;
+			strLine = strHeader.substr(nStartPos, nFindPos - nStartPos);
+			nStartPos = nFindPos + 2;
 		}
-		if ( 0 == nLineIndex )//µÚÒ»ÐÐ
+		if (0 == nLineIndex)//ç¬¬ä¸€è¡Œ
 		{
 			strncpy_s(m_szHttpVersion, strLine.c_str(), 8);
-			m_szHttpVersion[8]='\0';
-			if ( strcmp(m_szHttpVersion, "HTTP/1.1") != 0 )
+			m_szHttpVersion[8] = '\0';
+			if (strcmp(m_szHttpVersion, "HTTP/1.1") != 0)
 				return false;
-			int nSpace1=strLine.find(" ");
-			int nSpace2=strLine.find(" ", nSpace1+1);
-			m_uReturnValue=atoi(strLine.substr(nSpace1+1, nSpace2-nSpace1-1).c_str());
-			m_strContent=strLine.substr(nSpace2+1, strLine.size()-nSpace2-1);
+			int nSpace1 = strLine.find(" ");
+			int nSpace2 = strLine.find(" ", nSpace1 + 1);
+			m_uReturnValue = atoi(strLine.substr(nSpace1 + 1, nSpace2 - nSpace1 - 1).c_str());
+			m_strContent = strLine.substr(nSpace2 + 1, strLine.size() - nSpace2 - 1);
 			nLineIndex++;
 			continue;
 		}
-		int nSplit=strLine.find(": ");
-		strKey=strLine.substr(0, nSplit);
-		strValue=strLine.substr(nSplit+2, strLine.size()-nSplit-2);
-		std::pair<std::string ,std::string> data;
-		data.first=strKey;
-		data.second=strValue;
+		int nSplit = strLine.find(": ");
+		strKey = strLine.substr(0, nSplit);
+		strValue = strLine.substr(nSplit + 2, strLine.size() - nSplit - 2);
+		std::pair<std::string, std::string> data;
+		data.first = strKey;
+		data.second = strValue;
 		m_ValueMap.insert(data);
 		nLineIndex++;
-	}
-	while(nFindPos!=-1);
+	} while (nFindPos != -1);
 	return true;
 }
 
@@ -86,46 +85,46 @@ CHttpSocket::CHttpSocket()
 
 CHttpSocket::~CHttpSocket()
 {
-	if ( INVALID_SOCKET != m_socket )
+	if (INVALID_SOCKET != m_socket)
 		closesocket(m_socket);
 	WSACleanup();
 }
 
-bool CHttpSocket::InitSocket( const string& strHostName, const WORD sPort )
+bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
 {
 	bool bResult = false;
 	try
 	{
-		HOSTENT* pHostent=gethostbyname(strHostName.c_str());
-		if ( NULL == pHostent )
+		HOSTENT* pHostent = gethostbyname(strHostName.c_str());
+		if (NULL == pHostent)
 			throw Hir_QueryIPErr;
-		char szIP[16]={0};
+		char szIP[16] = { 0 };
 		sprintf_s(szIP, "%d.%d.%d.%d",
-			pHostent->h_addr_list[0][0]&0x00ff,
-			pHostent->h_addr_list[0][1]&0x00ff,
-			pHostent->h_addr_list[0][2]&0x00ff,
-			pHostent->h_addr_list[0][3]&0x00ff);
+			pHostent->h_addr_list[0][0] & 0x00ff,
+			pHostent->h_addr_list[0][1] & 0x00ff,
+			pHostent->h_addr_list[0][2] & 0x00ff,
+			pHostent->h_addr_list[0][3] & 0x00ff);
 		m_strIpAddr = A2U(szIP);
-		if ( INVALID_SOCKET != m_socket )
+		if (INVALID_SOCKET != m_socket)
 			closesocket(m_socket);
 		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if ( INVALID_SOCKET == m_socket )
+		if (INVALID_SOCKET == m_socket)
 			throw Hir_SocketErr;
-		int nSec=1000*10;//10ÃëÄÚÃ»ÓÐÊý¾ÝÔòËµÃ÷ÍøÂç¶Ï¿ª
+		int nSec = 1000 * 10;//10ç§’å†…æ²¡æœ‰æ•°æ®åˆ™è¯´æ˜Žç½‘ç»œæ–­å¼€
 		setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nSec, sizeof(int));
 		sockaddr_in		addrServer;
-		addrServer.sin_family=AF_INET;
-		addrServer.sin_port=htons(sPort);
-		addrServer.sin_addr.S_un.S_addr=inet_addr(szIP);
-		if ( SOCKET_ERROR == connect(m_socket, (SOCKADDR*)&addrServer, sizeof(addrServer)) )
+		addrServer.sin_family = AF_INET;
+		addrServer.sin_port = htons(sPort);
+		addrServer.sin_addr.S_un.S_addr = inet_addr(szIP);
+		if (SOCKET_ERROR == connect(m_socket, (SOCKADDR*)&addrServer, sizeof(addrServer)))
 			throw Hir_ConnectErr;
-		bResult=true;
+		bResult = true;
 	}
-	catch(HttpInterfaceError error)
+	catch (HttpInterfaceError error)
 	{
 		m_error = error;
 	}
-	catch(...)
+	catch (...)
 	{
 
 	}
@@ -134,90 +133,90 @@ bool CHttpSocket::InitSocket( const string& strHostName, const WORD sPort )
 
 bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 {
-	bool bResult	= false;
-	FILE* fp		= NULL;
-	BYTE* pBuffer	= NULL;
+	bool bResult = false;
+	FILE* fp = NULL;
+	BYTE* pBuffer = NULL;
 	try
 	{
 		wstring strHostName, strPage;
-		u_short uPort=80;
+		u_short uPort = 80;
 		MyParseUrlW(lpUrl, strHostName, strPage, uPort);
 		string str = U2A(strHostName);
-		if ( ! InitSocket(str, uPort) )
+		if (!InitSocket(str, uPort))
 			throw L"";
 		HTTP_HERDER header;
 		strcpy_s(header.szHostName, str.c_str());
-__request:
+	__request:
 		InitRequestHeader(header, U2A(strPage).c_str());
 		std::string strSend = header.ToString();
-		int nRet	= send(m_socket, strSend.c_str(), strSend.size(), 0);
-		if ( SOCKET_ERROR == nRet )
+		int nRet = send(m_socket, strSend.c_str(), strSend.size(), 0);
+		if (SOCKET_ERROR == nRet)
 			throw Hir_SendErr;
 		int		nRecvSize = 0, nWriteSize = 0;
-		double	nFileSize=0, nLoadSize=0;
-		bool	bFilter=false;//HTTP·µ»ØÍ·ÊÇ·ñÒÑ¾­±»¹ýÂËµô
-		if ( FileExistW(lpFilePath) )
+		double	nFileSize = 0, nLoadSize = 0;
+		bool	bFilter = false;//HTTPè¿”å›žå¤´æ˜¯å¦å·²ç»è¢«è¿‡æ»¤æŽ‰
+		if (FileExistW(lpFilePath))
 			DeleteFile(lpFilePath);
 		_wfopen_s(&fp, lpFilePath, L"wb+");
-		if ( NULL == fp )
+		if (NULL == fp)
 			throw Hir_CreateFileErr;
-		pBuffer = (BYTE*)malloc(DOWNLOAD_BUFFER_SIZE+1);
+		pBuffer = (BYTE*)malloc(DOWNLOAD_BUFFER_SIZE + 1);
 		do
 		{
-			if ( m_pCallback && m_pCallback->IsNeedStop() )
+			if (m_pCallback && m_pCallback->IsNeedStop())
 				throw Hir_UserCancel;
 			nRecvSize = recv(m_socket, (char*)pBuffer, DOWNLOAD_BUFFER_SIZE, 0);
-			if ( SOCKET_ERROR == nRecvSize )
+			if (SOCKET_ERROR == nRecvSize)
 				throw Hir_SocketErr;
-			if ( nRecvSize>0 )
+			if (nRecvSize>0)
 			{
-				pBuffer[nRecvSize]='\0';
-				if ( !bFilter )
+				pBuffer[nRecvSize] = '\0';
+				if (!bFilter)
 				{
 					std::string str((char*)pBuffer);
-					int nPos=str.find("\r\n\r\n");
-					if ( -1 == nPos )
+					int nPos = str.find("\r\n\r\n");
+					if (-1 == nPos)
 						continue;
 					std::string strHeader;
 					strHeader.append((char*)pBuffer, nPos);
 					CHttpHeader header(strHeader);
 					int nHttpValue = header.GetReturnValue();
-					if ( 404 == nHttpValue )//ÎÄ¼þ²»´æÔÚ
+					if (404 == nHttpValue)//æ–‡ä»¶ä¸å­˜åœ¨
 					{
 						throw Hir_404;
 					}
-					if ( nHttpValue>300 && nHttpValue<400 )//ÖØ¶¨Ïò
+					if (nHttpValue>300 && nHttpValue<400)//é‡å®šå‘
 					{
 						wstring strReLoadUrl = A2U(header.GetValue("location"));
-						if ( strReLoadUrl.find(L"http://") != 0 )
+						if (strReLoadUrl.find(L"http://") != 0)
 						{
 							strPage = strReLoadUrl;
 							goto __request;
 						}
-						if ( INVALID_SOCKET != m_socket )
+						if (INVALID_SOCKET != m_socket)
 						{
 							closesocket(m_socket);
 							m_socket = INVALID_SOCKET;
 						}
-						//ÖØ¶¨ÏòÇ°£¬ÇåÀíµô±¾º¯Êý´´½¨µÄ×ÊÔ´
+						//é‡å®šå‘å‰ï¼Œæ¸…ç†æŽ‰æœ¬å‡½æ•°åˆ›å»ºçš„èµ„æº
 						free(pBuffer);
 						pBuffer = NULL;
 						fclose(fp);
 						fp = NULL;
 						return DownloadFile(strReLoadUrl.c_str(), lpFilePath);
 					}
-					nFileSize	= atof(header.GetValue("Content-Length").c_str());
-					nWriteSize  = nRecvSize-nPos-4;
-					if ( nWriteSize>0 )
+					nFileSize = atof(header.GetValue("Content-Length").c_str());
+					nWriteSize = nRecvSize - nPos - 4;
+					if (nWriteSize>0)
 					{
-						fwrite(pBuffer+nPos+4, nWriteSize, 1, fp);
+						fwrite(pBuffer + nPos + 4, nWriteSize, 1, fp);
 						nLoadSize += nRecvSize;
-						if ( m_pCallback )
+						if (m_pCallback)
 							m_pCallback->OnDownloadCallback(m_lpParam, DS_Loading, nFileSize, nLoadSize);
 					}
-					if ( nFileSize == nLoadSize )
+					if (nFileSize == nLoadSize)
 					{
-						if ( m_pCallback )
+						if (m_pCallback)
 							m_pCallback->OnDownloadCallback(m_lpParam, DS_Finished, nFileSize, nLoadSize);
 						bResult = true;
 						break;
@@ -227,100 +226,99 @@ __request:
 				}
 				fwrite(pBuffer, nRecvSize, 1, fp);
 				nLoadSize += nRecvSize;
-				if ( m_pCallback )
+				if (m_pCallback)
 					m_pCallback->OnDownloadCallback(m_lpParam, DS_Loading, nFileSize, nLoadSize);
-				if ( nLoadSize >= nFileSize )
+				if (nLoadSize >= nFileSize)
 				{
 					bResult = true;
-					if ( m_pCallback )
+					if (m_pCallback)
 						m_pCallback->OnDownloadCallback(m_lpParam, DS_Finished, nFileSize, nLoadSize);
 					break;
 				}
 			}
-		}
-		while( nRecvSize>0 );
+		} while (nRecvSize>0);
 	}
-	catch(HttpInterfaceError error)
+	catch (HttpInterfaceError error)
 	{
 		m_error = error;
-		if ( m_pCallback )
+		if (m_pCallback)
 			m_pCallback->OnDownloadCallback(m_lpParam, DS_Fialed, 0, 0);
 	}
-	catch(...)
+	catch (...)
 	{
-		
+
 	}
-	if ( pBuffer )
+	if (pBuffer)
 	{
 		free(pBuffer);
 		pBuffer = NULL;
 	}
-	if ( fp )
+	if (fp)
 	{
 		fclose(fp);
 		fp = NULL;
 	}
-	if ( !bResult )//ÏÂÔØ²»³É¹¦£¬É¾³ý²»ÍêÕûµÄÎÄ¼þ
+	if (!bResult)//ä¸‹è½½ä¸æˆåŠŸï¼Œåˆ é™¤ä¸å®Œæ•´çš„æ–‡ä»¶
 		DeleteFile(lpFilePath);
 	return bResult;
 }
 
 
 
-bool CHttpSocket::DownloadToMem( LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize )
+bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)
 {
-	bool bResult	= false;
-	BYTE* pBuffer	= NULL;
+	bool bResult = false;
+	BYTE *pBuffer = NULL;
 	try
 	{
 		wstring strHostName, strPage;
 		u_short uPort = 80;
 		MyParseUrlW(lpUrl, strHostName, strPage, uPort);
 		string str = U2A(strHostName);
-		if ( ! InitSocket(str, uPort) )
+		if (!InitSocket(str, uPort))
 			throw Hir_InitErr;
 		HTTP_HERDER header;
 		strcpy_s(header.szHostName, str.c_str());
-__request:
+	__request:
 		InitRequestHeader(header, U2A(strPage).c_str());
 		std::string strSend = header.ToString();
 		int nRet = send(m_socket, strSend.c_str(), strSend.size(), 0);
-		if ( SOCKET_ERROR == nRet )
+		if (SOCKET_ERROR == nRet)
 			throw Hir_SendErr;
 		int	nRecvSize = 0, nWriteSize = 0;
-		int	nFileSize=0, nLoadSize=0;
-		bool	bFilter = false;//HTTP·µ»ØÍ·ÊÇ·ñÒÑ¾­±»¹ýÂËµô
-		const int nBufferSzie = 1024*4;
-		char szHeader[nBufferSzie+1];
-		while( true )
+		int	nFileSize = 0, nLoadSize = 0;
+		bool	bFilter = false;//HTTPè¿”å›žå¤´æ˜¯å¦å·²ç»è¢«è¿‡æ»¤æŽ‰
+		const int nBufferSzie = 1024 * 4;
+		char szHeader[nBufferSzie + 1];
+		while (true)
 		{
 			nRecvSize = recv(m_socket, szHeader, nBufferSzie, 0);
-			if ( SOCKET_ERROR == nRecvSize )
+			if (SOCKET_ERROR == nRecvSize)
 				throw Hir_SocketErr;
-			if ( nRecvSize == 0 )
+			if (nRecvSize == 0)
 				break;
-			if ( !bFilter )
+			if (!bFilter)
 			{
 				std::string str(szHeader, nRecvSize);
-				int nPos=str.find("\r\n\r\n");
-				if ( -1 == nPos )
+				int nPos = str.find("\r\n\r\n");
+				if (-1 == nPos)
 					throw Hir_HeaderErr;
 				std::string strHeader(szHeader, nPos);
 				CHttpHeader header(strHeader);
 				int nHttpValue = header.GetReturnValue();
-				if ( 404 == nHttpValue )//ÎÄ¼þ²»´æÔÚ
+				if (404 == nHttpValue)//æ–‡ä»¶ä¸å­˜åœ¨
 				{
 					throw Hir_404;
 				}
-				if ( nHttpValue>300 && nHttpValue<400 )//ÖØ¶¨Ïò
+				if (nHttpValue>300 && nHttpValue<400)//é‡å®šå‘
 				{
 					wstring strReLoadUrl = A2U(header.GetValue("location"));
-					if ( strReLoadUrl.find(L"http://") != 0 )
+					if (strReLoadUrl.find(L"http://") != 0)
 					{
 						strPage = strReLoadUrl;
 						goto __request;
 					}
-					if ( INVALID_SOCKET != m_socket )
+					if (INVALID_SOCKET != m_socket)
 					{
 						closesocket(m_socket);
 						m_socket = INVALID_SOCKET;
@@ -329,16 +327,16 @@ __request:
 				}
 				nFileSize = atoi(header.GetValue("Content-Length").c_str());
 				*nSize = nFileSize;
-				if ( nFileSize>DOWNLOAD_BUFFER_SIZE || nFileSize<=0 )
+				if (nFileSize>DOWNLOAD_BUFFER_SIZE || nFileSize <= 0)
 					throw Hir_BufferErr;
 				pBuffer = (BYTE*)malloc(nFileSize);
-				nWriteSize  = nRecvSize-nPos-4;
-				if ( nWriteSize>0 )
+				nWriteSize = nRecvSize - nPos - 4;
+				if (nWriteSize>0)
 				{
-					memcpy(pBuffer, szHeader+nPos+4, nWriteSize);
+					memcpy(pBuffer + nLoadSize, szHeader + nPos + 4, nWriteSize);
 					nLoadSize += nWriteSize;
 				}
-				if ( nFileSize == nLoadSize )
+				if (nFileSize == nLoadSize)
 				{
 					bResult = true;
 					break;
@@ -346,19 +344,19 @@ __request:
 				bFilter = true;
 				continue;
 			}
-			memcpy(pBuffer, szHeader, nRecvSize);
+			memcpy(pBufferPtr + nLoadSize, szHeader, nRecvSize);
 			nLoadSize += nRecvSize;
-			if ( nLoadSize >= nFileSize )
+			if (nLoadSize >= nFileSize)
 			{
 				bResult = true;
 				break;
 			}
 		}
 	}
-	catch(HttpInterfaceError error)
+	catch (HttpInterfaceError error)
 	{
 		m_error = error;
-		if ( pBuffer )
+		if (pBuffer)
 		{
 			free(pBuffer);
 			pBuffer = NULL;
@@ -366,17 +364,17 @@ __request:
 		*ppBuffer = NULL;
 		*nSize = 0;
 	}
-	if ( bResult )
+	if (bResult)
 	{
 		*ppBuffer = pBuffer;
 	}
 	return bResult;
 }
 
-void CHttpSocket::InitRequestHeader( HTTP_HERDER& header, const char* pRequest, HttpRequest type/*=get*/, LPCSTR pRange/*=NULL*/, LPCSTR pAccept/*="* / *"*/ )
+void CHttpSocket::InitRequestHeader(HTTP_HERDER& header, const char* pRequest, HttpRequest type/*=get*/, LPCSTR pRange/*=NULL*/, LPCSTR pAccept/*="* / *"*/)
 {
 	memset(header.szType, 0, 5);
-	if ( Hr_Get == type )
+	if (Hr_Get == type)
 		strcpy_s(header.szType, "GET");
 	else
 		strcpy_s(header.szType, "POST");
@@ -385,7 +383,6 @@ void CHttpSocket::InitRequestHeader( HTTP_HERDER& header, const char* pRequest, 
 	memset(header.szAccept, 0, 100);
 	strcpy_s(header.szAccept, pAccept);
 	memset(header.szRange, 0, 11);
-	if ( pRange )
+	if (pRange)
 		strcpy_s(header.szRange, pRange);
 }
-
