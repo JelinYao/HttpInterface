@@ -11,9 +11,13 @@ class IHttpBase
 {
 public:
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
+	
 	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)= 0;
+	
 	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)= 0;
+	
 	virtual void	FreeInstance()= 0;
+	
 	virtual HttpInterfaceError GetErrorCode()= 0;
 };
 
@@ -25,7 +29,9 @@ class IWininetHttp
 public:
 	//HTTP请求功能
 	virtual string	Request(LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCSTR lpHeader = NULL)= 0;
+	
 	virtual string	Request(LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCWSTR lpHeader = NULL)= 0;
+	
 };
 
 
