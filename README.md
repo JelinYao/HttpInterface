@@ -10,11 +10,11 @@ Windows上C++封装的HTTP库，包含三种实现模式（WinInet、WinHttp、s
 class IHttpBase
 {
 public:
-	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)				= 0;
-	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)							= 0;
-	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)		= 0;
-	virtual void	FreeInstance()															= 0;
-	virtual HttpInterfaceError GetErrorCode()												= 0;
+	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
+	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)= 0;
+	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)= 0;
+	virtual void	FreeInstance()= 0;
+	virtual HttpInterfaceError GetErrorCode()= 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -24,8 +24,8 @@ class IWininetHttp
 {
 public:
 	//HTTP请求功能
-	virtual string	Request(LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCSTR lpHeader = NULL)			= 0;
-	virtual string	Request(LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCWSTR lpHeader = NULL)			= 0;
+	virtual string	Request(LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCSTR lpHeader = NULL)= 0;
+	virtual string	Request(LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCWSTR lpHeader = NULL)= 0;
 };
 
 
@@ -37,7 +37,7 @@ class ISocketHttp
 	:public IHttpBase
 {
 public:
-	virtual LPCWSTR	GetIpAddr()const	= 0;
+	virtual LPCWSTR	GetIpAddr()const= 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -47,7 +47,7 @@ class IWinHttp
 {
 public:
 	//设置超时时间，单位：毫秒
-	virtual void	SetTimeOut(int dwConnectTime,  int dwSendTime, int dwRecvTime)										= 0;		
+	virtual void	SetTimeOut(int dwConnectTime,  int dwSendTime, int dwRecvTime)= 0;		
 };
 
 
