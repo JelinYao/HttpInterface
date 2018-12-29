@@ -9,6 +9,7 @@ Windows上C++封装的HTTP库，包含三种实现模式（WinInet、WinHttp、s
 
 class IHttpBase
 {
+
 public:
 
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
@@ -28,6 +29,7 @@ public:
 class IWininetHttp
 	:public IHttpBase
 {
+
 public:
 
 	//HTTP请求功能
@@ -44,21 +46,27 @@ public:
 
 class ISocketHttp
 	:public IHttpBase
+	
 {
+
 public:
 
 	virtual LPCWSTR	GetIpAddr()const= 0;
+	
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //WinHttp类
 class IWinHttp
 	: public IWininetHttp
+	
 {
+
 public:
 
 	//设置超时时间，单位：毫秒
-	virtual void	SetTimeOut(int dwConnectTime,  int dwSendTime, int dwRecvTime)= 0;		
+	virtual void	SetTimeOut(int dwConnectTime,  int dwSendTime, int dwRecvTime)= 0;	
+	
 };
 
 
