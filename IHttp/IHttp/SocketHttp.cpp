@@ -344,7 +344,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 				bFilter = true;
 				continue;
 			}
-			memcpy(pBufferPtr + nLoadSize, szHeader, nRecvSize);
+			memcpy(pBuffer + nLoadSize, szHeader, nRecvSize);
 			nLoadSize += nRecvSize;
 			if (nLoadSize >= nFileSize)
 			{
