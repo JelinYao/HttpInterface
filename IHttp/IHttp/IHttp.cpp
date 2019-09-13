@@ -9,18 +9,18 @@
 
 
 
-LIB_FUN	bool CreateInstance( IHttpBase** pBase, HttpFlag flag )
+LIB_FUN	bool CreateInstance( IHttpBase** pBase, InterfaceType flag )
 {
 	IHttpBase* pInst = NULL;
-	switch( flag )
+	switch (flag)
 	{
-	case Hf_Socket:
+	case TypeSocket:
 		pInst = new CHttpSocket();
 		break;
-	case Hf_WinInet:
+	case TypeWinInet:
 		pInst = new CWininetHttp();
 		break;
-	case Hf_WinHttp:
+	case TypeWinHttp:
 		pInst = new CWinHttp();
 		break;
 	}

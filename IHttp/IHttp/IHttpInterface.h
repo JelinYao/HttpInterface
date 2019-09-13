@@ -16,8 +16,8 @@ using std::wstring;
 
 enum HttpRequest
 {
-	Hr_Post,
-	Hr_Get,
+	HttpGet = 0,
+	HttpPost,
 };
 //枚举下载状态
 enum DownloadState
@@ -33,22 +33,23 @@ enum DownloadState
 ******************************************************/
 enum HttpInterfaceError
 {
-	Hir_Success = 0,		//成功
-	Hir_InitErr,			//初始化失败
-	Hir_ConnectErr,			//连接HTTP服务器失败
-	Hir_SendErr,			//发送请求失败
-	Hir_QueryErr,			//查询HTTP请求头失败
-	Hir_404,				//页面不存在
-	Hir_IllegalUrl,			//无效的URL
-	Hir_CreateFileErr,		//创建文件失败
-	Hir_DownloadErr,		//下载失败
-	Hir_QueryIPErr,			//获取域名对应的地址失败
-	Hir_SocketErr,			//套接字错误
-	Hir_UserCancel,			//用户取消下载
-	Hir_BufferErr,			//文件太大，缓冲区不足
-	Hir_HeaderErr,			//HTTP请求头错误
-	Hir_ParamErr,			//参数错误，空指针，空字符……
-	Hir_UnknowErr,
+	HttpErrorSuccess = 0,		//成功
+	HttpErrorInit,				//初始化失败
+	HttpErrorConnect,			//连接HTTP服务器失败
+	HttpErrorSend,				//发送请求失败
+	HttpErrorQuery,				//查询HTTP请求头失败
+	HttpError404,				//页面不存在
+	HttpErrorIllegalUrl,		//无效的URL
+	HttpErrorCreateFile,		//创建文件失败
+	HttpErrorDownload,			//下载失败
+	HttpErrorQueryIP,			//获取域名对应的地址失败
+	HttpErrorSocket,			//套接字错误
+	HttpErrorUserCancel,		//用户取消下载
+	HttpErrorBuffer,			//文件太大，缓冲区不足
+	HttpErrorHeader,			//HTTP请求头错误
+	HttpErrorParam,				//参数错误，空指针，空字符……
+	HttpErrorWriteFile,			//写入文件失败
+	HttpErrorUnknow,
 
 };
 
@@ -110,36 +111,25 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////////
 //DLL的导出函数声明
-#define EXPORT_LIB
-#define LIB_DLL
-#ifdef EXPORT_LIB//导出库
-	#ifdef LIB_DLL
+#ifdef _USRDLL//导出库
 		#define LIB_FUN extern "C" __declspec(dllexport)
 	#else
-		#define LIB_FUN
-	#endif
-#else//引用库
-	#ifdef LID_DLL
 		#define LIB_FUN extern "C" __declspec(dllimport)
-	#else
-		#define LIB_FUN
-	#endif
 #endif
-
 /***********************************************************
 *声明导出函数部分
 *
 ************************************************************
 */
 
-enum HttpFlag
+enum InterfaceType
 {
-	Hf_Socket = 0,
-	Hf_WinInet,
-	Hf_WinHttp,
+	TypeSocket = 0,
+	TypeWinInet,
+	TypeWinHttp,
 };
 
-LIB_FUN	bool CreateInstance(IHttpBase** pBase, HttpFlag flag);
+LIB_FUN	bool CreateInstance(IHttpBase** pBase, InterfaceType flag);
 
 
 

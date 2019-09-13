@@ -11,7 +11,16 @@ inline void MyParseUrlW( LPCWSTR lpUrl, wstring& strHostName, wstring& strPage, 
 	int nPos=strTemp.find(L"http://");
 	if (wstring::npos != nPos )
 		strTemp=strTemp.substr(nPos+7, strTemp.size()-nPos-7);
-	nPos=strTemp.find('/');
+	else
+	{
+		nPos = strTemp.find(L"https://");
+		if(wstring::npos != nPos)
+		{
+			sPort = 443;//INTERNET_DEFAULT_HTTPS_PORT;
+			strTemp=strTemp.substr(nPos+8, strTemp.size()-nPos-8);
+		}
+	}
+	nPos = strTemp.find('/');
 	if ( wstring::npos == nPos )//没有找到 /
 		strHostName=strTemp;
 	else
@@ -25,7 +34,7 @@ inline void MyParseUrlW( LPCWSTR lpUrl, wstring& strHostName, wstring& strPage, 
 	}
 	if ( wstring::npos == nPos )
 		return ;
-	strPage=strTemp.substr(nPos, strTemp.size()-nPos);
+	strPage = strTemp.substr(nPos, strTemp.size() - nPos);
 }
 
 inline void MyParseUrlA( LPCSTR lpUrl, string& strHostName, string& strPage, WORD& sPort )
@@ -35,7 +44,16 @@ inline void MyParseUrlA( LPCSTR lpUrl, string& strHostName, string& strPage, WOR
 	int nPos	= strTemp.find("http://");
 	if ( string::npos != nPos )
 		strTemp	= strTemp.substr(nPos+7, strTemp.size()-nPos-7);
-	nPos	= strTemp.find('/');
+	else
+	{
+		nPos = strTemp.find("https://");
+		if (wstring::npos != nPos)
+		{
+			sPort = 443;//INTERNET_DEFAULT_HTTPS_PORT;
+			strTemp = strTemp.substr(nPos + 8, strTemp.size() - nPos - 8);
+		}
+	}
+	nPos = strTemp.find('/');
 	if ( string::npos == nPos )//没有找到 /
 		strHostName	= strTemp;
 	else
@@ -49,7 +67,7 @@ inline void MyParseUrlA( LPCSTR lpUrl, string& strHostName, string& strPage, WOR
 	}
 	if ( string::npos == nPos )
 		return ;
-	strPage=strTemp.substr(nPos, strTemp.size()-nPos);
+	strPage = strTemp.substr(nPos, strTemp.size() - nPos);
 }
 
 inline wstring Utf2U(const string& strUtf8)  

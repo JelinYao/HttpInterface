@@ -2,18 +2,9 @@
 #include "IHttpInterface.h"
 
 
-class IHttp
+struct HttpParamsData
 {
-public:
-	IHttp()
-		: m_lpParam(NULL)
-		, m_error(Hir_Success)
-		, m_pCallback(NULL)
-	{
-
-	}
-protected:
-	void*	m_lpParam;
-	HttpInterfaceError	m_error;
-	IHttpCallback*	m_pCallback;
+	void *lpparam;
+	IHttpCallback *callback;
+	HttpInterfaceError errcode;
 };

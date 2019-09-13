@@ -4,7 +4,6 @@
 
 class CWinHttp
 	: public IWinHttp
-	, public IHttp
 {
 public:
 	CWinHttp(void);
@@ -14,10 +13,10 @@ public:
 	virtual string	Request(LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCSTR lpHeader=NULL);
 	virtual string	Request(LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCWSTR lpHeader=NULL);
 	virtual void	FreeInstance()													{ delete this;		}
-	virtual HttpInterfaceError GetErrorCode()										{ return m_error;	}
-	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)		{ m_pCallback = pCallback; m_lpParam = pParam; }
 	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath);
 	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize);
+	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam);
+	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
 
 protected:
 	bool	Init();
@@ -32,11 +31,13 @@ protected:
 	bool	QueryContentLength(OUT DWORD& dwLength);
 
 private:
+	bool		m_bHttps;
 	HINTERNET	m_hInternet;
 	HINTERNET	m_hConnect;
 	HINTERNET	m_hRequest;
 	int			m_nConnTimeout;
 	int			m_nSendTimeout;
 	int			m_nRecvTimeout;
+	HttpParamsData m_paramsData;
 };
 

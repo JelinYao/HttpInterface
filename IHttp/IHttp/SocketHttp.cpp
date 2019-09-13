@@ -81,6 +81,7 @@ CHttpSocket::CHttpSocket()
 {
 	WSADATA data;
 	WSAStartup(0x0202, &data);
+	memset(&m_paramsData, 0, sizeof(HttpParamsData));
 }
 
 CHttpSocket::~CHttpSocket()
@@ -97,7 +98,7 @@ bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
 	{
 		HOSTENT* pHostent = gethostbyname(strHostName.c_str());
 		if (NULL == pHostent)
-			throw Hir_QueryIPErr;
+			throw HttpErrorQueryIP;
 		char szIP[16] = { 0 };
 		sprintf_s(szIP, "%d.%d.%d.%d",
 			pHostent->h_addr_list[0][0] & 0x00ff,
@@ -109,7 +110,7 @@ bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
 			closesocket(m_socket);
 		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (INVALID_SOCKET == m_socket)
-			throw Hir_SocketErr;
+			throw HttpErrorSocket;
 		int nSec = 1000 * 10;//10秒内没有数据则说明网络断开
 		setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nSec, sizeof(int));
 		sockaddr_in		addrServer;
@@ -117,12 +118,12 @@ bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
 		addrServer.sin_port = htons(sPort);
 		addrServer.sin_addr.S_un.S_addr = inet_addr(szIP);
 		if (SOCKET_ERROR == connect(m_socket, (SOCKADDR*)&addrServer, sizeof(addrServer)))
-			throw Hir_ConnectErr;
+			throw HttpErrorConnect;
 		bResult = true;
 	}
 	catch (HttpInterfaceError error)
 	{
-		m_error = error;
+		m_paramsData.errcode = error;
 	}
 	catch (...)
 	{
@@ -151,7 +152,7 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 		std::string strSend = header.ToString();
 		int nRet = send(m_socket, strSend.c_str(), strSend.size(), 0);
 		if (SOCKET_ERROR == nRet)
-			throw Hir_SendErr;
+			throw HttpErrorSend;
 		int		nRecvSize = 0, nWriteSize = 0;
 		double	nFileSize = 0, nLoadSize = 0;
 		bool	bFilter = false;//HTTP返回头是否已经被过滤掉
@@ -159,15 +160,15 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 			DeleteFile(lpFilePath);
 		_wfopen_s(&fp, lpFilePath, L"wb+");
 		if (NULL == fp)
-			throw Hir_CreateFileErr;
+			throw HttpErrorCreateFile;
 		pBuffer = (BYTE*)malloc(DOWNLOAD_BUFFER_SIZE + 1);
 		do
 		{
-			if (m_pCallback && m_pCallback->IsNeedStop())
-				throw Hir_UserCancel;
+			if (m_paramsData.callback && m_paramsData.callback->IsNeedStop())
+				throw HttpErrorUserCancel;
 			nRecvSize = recv(m_socket, (char*)pBuffer, DOWNLOAD_BUFFER_SIZE, 0);
 			if (SOCKET_ERROR == nRecvSize)
-				throw Hir_SocketErr;
+				throw HttpErrorSocket;
 			if (nRecvSize>0)
 			{
 				pBuffer[nRecvSize] = '\0';
@@ -183,7 +184,7 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 					int nHttpValue = header.GetReturnValue();
 					if (404 == nHttpValue)//文件不存在
 					{
-						throw Hir_404;
+						throw HttpError404;
 					}
 					if (nHttpValue>300 && nHttpValue<400)//重定向
 					{
@@ -211,13 +212,13 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 					{
 						fwrite(pBuffer + nPos + 4, nWriteSize, 1, fp);
 						nLoadSize += nRecvSize;
-						if (m_pCallback)
-							m_pCallback->OnDownloadCallback(m_lpParam, DS_Loading, nFileSize, nLoadSize);
+						if (m_paramsData.callback)
+							m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Loading, nFileSize, nLoadSize);
 					}
 					if (nFileSize == nLoadSize)
 					{
-						if (m_pCallback)
-							m_pCallback->OnDownloadCallback(m_lpParam, DS_Finished, nFileSize, nLoadSize);
+						if (m_paramsData.callback)
+							m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Finished, nFileSize, nLoadSize);
 						bResult = true;
 						break;
 					}
@@ -226,13 +227,13 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 				}
 				fwrite(pBuffer, nRecvSize, 1, fp);
 				nLoadSize += nRecvSize;
-				if (m_pCallback)
-					m_pCallback->OnDownloadCallback(m_lpParam, DS_Loading, nFileSize, nLoadSize);
+				if (m_paramsData.callback)
+					m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Loading, nFileSize, nLoadSize);
 				if (nLoadSize >= nFileSize)
 				{
 					bResult = true;
-					if (m_pCallback)
-						m_pCallback->OnDownloadCallback(m_lpParam, DS_Finished, nFileSize, nLoadSize);
+					if (m_paramsData.callback)
+						m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Finished, nFileSize, nLoadSize);
 					break;
 				}
 			}
@@ -240,9 +241,9 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 	}
 	catch (HttpInterfaceError error)
 	{
-		m_error = error;
-		if (m_pCallback)
-			m_pCallback->OnDownloadCallback(m_lpParam, DS_Fialed, 0, 0);
+		m_paramsData.errcode = error;
+		if (m_paramsData.callback)
+			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Fialed, 0, 0);
 	}
 	catch (...)
 	{
@@ -265,6 +266,12 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 
 
 
+void CHttpSocket::SetDownloadCallback(IHttpCallback* pCallback, void* pParam)
+{
+	m_paramsData.callback = pCallback;
+	m_paramsData.lpparam = pParam;
+}
+
 bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)
 {
 	bool bResult = false;
@@ -276,7 +283,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 		MyParseUrlW(lpUrl, strHostName, strPage, uPort);
 		string str = U2A(strHostName);
 		if (!InitSocket(str, uPort))
-			throw Hir_InitErr;
+			throw HttpErrorInit;
 		HTTP_HERDER header;
 		strcpy_s(header.szHostName, str.c_str());
 	__request:
@@ -284,7 +291,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 		std::string strSend = header.ToString();
 		int nRet = send(m_socket, strSend.c_str(), strSend.size(), 0);
 		if (SOCKET_ERROR == nRet)
-			throw Hir_SendErr;
+			throw HttpErrorSend;
 		int	nRecvSize = 0, nWriteSize = 0;
 		int	nFileSize = 0, nLoadSize = 0;
 		bool	bFilter = false;//HTTP返回头是否已经被过滤掉
@@ -294,7 +301,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 		{
 			nRecvSize = recv(m_socket, szHeader, nBufferSzie, 0);
 			if (SOCKET_ERROR == nRecvSize)
-				throw Hir_SocketErr;
+				throw HttpErrorSocket;
 			if (nRecvSize == 0)
 				break;
 			if (!bFilter)
@@ -302,13 +309,13 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 				std::string str(szHeader, nRecvSize);
 				int nPos = str.find("\r\n\r\n");
 				if (-1 == nPos)
-					throw Hir_HeaderErr;
+					throw HttpErrorHeader;
 				std::string strHeader(szHeader, nPos);
 				CHttpHeader header(strHeader);
 				int nHttpValue = header.GetReturnValue();
 				if (404 == nHttpValue)//文件不存在
 				{
-					throw Hir_404;
+					throw HttpError404;
 				}
 				if (nHttpValue>300 && nHttpValue<400)//重定向
 				{
@@ -328,7 +335,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 				nFileSize = atoi(header.GetValue("Content-Length").c_str());
 				*nSize = nFileSize;
 				if (nFileSize>DOWNLOAD_BUFFER_SIZE || nFileSize <= 0)
-					throw Hir_BufferErr;
+					throw HttpErrorBuffer;
 				pBuffer = (BYTE*)malloc(nFileSize);
 				nWriteSize = nRecvSize - nPos - 4;
 				if (nWriteSize>0)
@@ -355,7 +362,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 	}
 	catch (HttpInterfaceError error)
 	{
-		m_error = error;
+		m_paramsData.errcode = error;
 		if (pBuffer)
 		{
 			free(pBuffer);
@@ -374,7 +381,7 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 void CHttpSocket::InitRequestHeader(HTTP_HERDER& header, const char* pRequest, HttpRequest type/*=get*/, LPCSTR pRange/*=NULL*/, LPCSTR pAccept/*="* / *"*/)
 {
 	memset(header.szType, 0, 5);
-	if (Hr_Get == type)
+	if (HttpGet == type)
 		strcpy_s(header.szType, "GET");
 	else
 		strcpy_s(header.szType, "POST");

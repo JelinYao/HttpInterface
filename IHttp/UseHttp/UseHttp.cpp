@@ -4,9 +4,9 @@
 #include "stdafx.h"
 #include "..//IHttp/IHttpInterface.h"
 #ifdef _DEBUG
-#pragma comment(lib, "..//bin//Debug//IHttpD")
+#pragma comment(lib, "../lib/IHttpD.lib")
 #else
-#pragma comment(lib, "..//bin//Release//IHttp")
+#pragma comment(lib, "../lib/IHttp.lib")
 #endif
 #include <crtdbg.h>
 #include <Windows.h>
@@ -29,7 +29,7 @@ public:
 			printf("下载进度：%d%%\n", nPercent);
 		}
 	}
-	virtual bool	IsNeedStop()
+	virtual bool IsNeedStop()
 	{
 		//如果需要在外部终止下载，返回true
 		return false;//继续下载
@@ -55,15 +55,15 @@ int _tmain(int argc, _TCHAR* argv[])
 bool TestWinInet()
 {
 	IWininetHttp* pHttp;
-	bool bRet = CreateInstance((IHttpBase**)&pHttp, Hf_WinInet);
+	bool bRet = CreateInstance((IHttpBase**)&pHttp, TypeWinInet);
 	if (!bRet)
 	{
 		return false;
 	}
 	char* pMem = NULL;
 	int nSize = 0;
-	const wchar_t* pUrl = L"http://blog.csdn.net/mfcing";
-	string str = pHttp->Request(pUrl, Hr_Get);
+	const wchar_t* pUrl = L"https://blog.csdn.net/mfcing";
+	string str = pHttp->Request(pUrl, HttpGet);
 	if (str.empty())
 	{
 		//请求失败
@@ -71,8 +71,7 @@ bool TestWinInet()
 		return false;
 	}
 	if (pHttp->DownloadToMem(pUrl, (void**)&pMem, &nSize))
-	{
-		//下载到内存中，与下载到本地相比效率更高，不用读写文件
+	{//下载到内存中，与下载到本地相比效率更高，不用读写文件（仅适用于文件小文件）
 		
 		//用完之后一定要释放这块内存空间
 		free(pMem);
@@ -80,6 +79,7 @@ bool TestWinInet()
 	else
 	{
 		//下载失败，获取错误信息
+		DWORD dwCode = GetLastError();
 		HttpInterfaceError code = pHttp->GetErrorCode();
 		pHttp->FreeInstance();
 		return false;
@@ -91,13 +91,13 @@ bool TestWinInet()
 bool TestWinHttp()
 {
 	IWinHttp* pHttp;
-	bool bRet = CreateInstance((IHttpBase**)&pHttp, Hf_WinHttp);
+	bool bRet = CreateInstance((IHttpBase**)&pHttp, TypeWinHttp);
 	if (!bRet)
 	{
 		return false;
 	}
-	const char* pUrl = "www.haoso.com";
-	string strHtml = pHttp->Request(pUrl, Hr_Get);
+	const char* pUrl = "https://www.qq.com";
+	string strHtml = pHttp->Request(pUrl, HttpGet);
 	if (strHtml.empty())
 	{
 		//请求失败
@@ -115,7 +115,7 @@ bool TestWinHttp()
 bool TestSocketHttp()
 {
 	ISocketHttp* pHttp;
-	bool bRet = CreateInstance((IHttpBase**)&pHttp, Hf_Socket);
+	bool bRet = CreateInstance((IHttpBase**)&pHttp, TypeSocket);
 	if (!bRet)
 	{
 		return false;
@@ -139,18 +139,20 @@ bool TestSocketHttp()
 bool TestDownloadFile()
 {
 	IWinHttp* pHttp;
-	bool bRet = CreateInstance((IHttpBase**)&pHttp, Hf_WinHttp);
+	bool bRet = CreateInstance((IHttpBase**)&pHttp, TypeWinHttp);
 	if (!bRet)
 	{
 		return false;
 	}
 	CMyCallback cb;
 	pHttp->SetDownloadCallback(&cb, NULL);
-	const wchar_t* pUrl = L"http://sw.bos.baidu.com/sw-search-sp/software/97e90d6bfca7b/WeChat_2.2.0.37_Setup.exe";
+	const wchar_t* pUrl = L"https://pm.myapp.com/invc/xfspeed/qqsoftmgr/QQSoftDownloader_v1.1_webnew_22127@.exe";
 	const wchar_t* pSavePath = L"c:\\down.exe";
 	if (!pHttp->DownloadFile(pUrl, pSavePath))
 	{
 		//下载失败
+		DWORD dwCode = GetLastError();
+		HttpInterfaceError error = pHttp->GetErrorCode();
 		pHttp->FreeInstance();
 		return false;
 	}

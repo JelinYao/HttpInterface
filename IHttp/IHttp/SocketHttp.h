@@ -1,8 +1,3 @@
-/*
-新增可以重定向的HTTP下载库，暂时只支持下载
-姚佳宁
-2014年10月30日18:05:13
-*/
 #pragma once
 #include <string>
 #include <map>
@@ -57,16 +52,15 @@ struct HTTP_HERDER
 
 class CHttpSocket
 	: public ISocketHttp
-	, public IHttp
 {
 public:
 	CHttpSocket();
 	virtual ~CHttpSocket();
 	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath);
-	virtual	LPCWSTR	GetIpAddr()const												{ return m_strIpAddr.c_str();	}
-	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)		{ m_pCallback = pCallback; m_lpParam = pParam; }
-	virtual HttpInterfaceError GetErrorCode()										{ return m_error;				}
-	virtual	void	FreeInstance()													{ delete this;					}
+	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam);
+	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
+	virtual	LPCWSTR	GetIpAddr()const { return m_strIpAddr.c_str();	}
+	virtual	void	FreeInstance() { delete this; }
 	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize);
 
 protected:
@@ -103,10 +97,10 @@ protected:
 
 protected:
 	bool	InitSocket(const string& strHostName, const WORD sPort);
-	void	InitRequestHeader( HTTP_HERDER& header, LPCSTR pRequest, HttpRequest type=Hr_Get, LPCSTR pRange=NULL, const char* pAccept="*/*" );
+	void	InitRequestHeader( HTTP_HERDER& header, LPCSTR pRequest, HttpRequest type=HttpGet, LPCSTR pRange=NULL, const char* pAccept="*/*" );
 
 private:
 	SOCKET	m_socket;
 	wstring	m_strIpAddr;
-
+	HttpParamsData m_paramsData;
 };

@@ -6,7 +6,6 @@
 
 class CWininetHttp
 	: public IWininetHttp
-	, public IHttp
 {
 public:
 	CWininetHttp(void);
@@ -15,16 +14,19 @@ public:
 	virtual string	Request(LPCWSTR pUrl, HttpRequest type, LPCSTR pPostData = NULL, LPCWSTR pHeader=NULL);
 	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath);
 	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize);
-	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)		{ m_pCallback = pCallback; m_lpParam = pParam; }
-	virtual HttpInterfaceError GetErrorCode()										{ return m_error;	}
-	virtual	void	FreeInstance()													{ delete this;		}
+	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam);
+	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
+	virtual	void	FreeInstance() { delete this; }
 	
 protected:
 	//¹Ø±Õ¾ä±ú
 	void	ReleaseHandle(HINTERNET& hInternet);
 	void	Release();
+
 private:
+	bool		m_bHttps;
 	HINTERNET	m_hSession;
 	HINTERNET	m_hConnect;
 	HINTERNET	m_hRequest;
+	HttpParamsData m_paramsData;
 };
