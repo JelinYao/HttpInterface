@@ -67,7 +67,7 @@ bool CHttpSocket::CHttpHeader::Revolse(const std::string& strHeader)
 		std::pair<std::string, std::string> data;
 		data.first = strKey;
 		data.second = strValue;
-		m_ValueMap.insert(data);
+		m_ValueMap.insert(std::move(data));
 		nLineIndex++;
 	} while (nFindPos != -1);
 	return true;
@@ -75,12 +75,9 @@ bool CHttpSocket::CHttpHeader::Revolse(const std::string& strHeader)
 
 /////////////////////////////////////////////////////////////////////////
 
-
 CHttpSocket::CHttpSocket()
 	: m_socket(INVALID_SOCKET)
 {
-	WSADATA data;
-	WSAStartup(0x0202, &data);
 	memset(&m_paramsData, 0, sizeof(HttpParamsData));
 }
 
@@ -88,7 +85,6 @@ CHttpSocket::~CHttpSocket()
 {
 	if (INVALID_SOCKET != m_socket)
 		closesocket(m_socket);
-	WSACleanup();
 }
 
 bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
@@ -96,6 +92,7 @@ bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
 	bool bResult = false;
 	try
 	{
+		//查询域名对应的IP地址
 		HOSTENT* pHostent = gethostbyname(strHostName.c_str());
 		if (NULL == pHostent)
 			throw HttpErrorQueryIP;
@@ -108,6 +105,7 @@ bool CHttpSocket::InitSocket(const string& strHostName, const WORD sPort)
 		m_strIpAddr = A2U(szIP);
 		if (INVALID_SOCKET != m_socket)
 			closesocket(m_socket);
+		//连接HTTP服务器
 		m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (INVALID_SOCKET == m_socket)
 			throw HttpErrorSocket;
@@ -213,12 +211,12 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 						fwrite(pBuffer + nPos + 4, nWriteSize, 1, fp);
 						nLoadSize += nRecvSize;
 						if (m_paramsData.callback)
-							m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Loading, nFileSize, nLoadSize);
+							m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpLoading, nFileSize, nLoadSize);
 					}
 					if (nFileSize == nLoadSize)
 					{
 						if (m_paramsData.callback)
-							m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Finished, nFileSize, nLoadSize);
+							m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpFinished, nFileSize, nLoadSize);
 						bResult = true;
 						break;
 					}
@@ -228,12 +226,12 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 				fwrite(pBuffer, nRecvSize, 1, fp);
 				nLoadSize += nRecvSize;
 				if (m_paramsData.callback)
-					m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Loading, nFileSize, nLoadSize);
+					m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpLoading, nFileSize, nLoadSize);
 				if (nLoadSize >= nFileSize)
 				{
 					bResult = true;
 					if (m_paramsData.callback)
-						m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Finished, nFileSize, nLoadSize);
+						m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpFinished, nFileSize, nLoadSize);
 					break;
 				}
 			}
@@ -243,7 +241,7 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 	{
 		m_paramsData.errcode = error;
 		if (m_paramsData.callback)
-			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Fialed, 0, 0);
+			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpFialed, 0, 0);
 	}
 	catch (...)
 	{

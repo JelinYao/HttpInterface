@@ -138,7 +138,7 @@ bool CWinHttp::DownloadFile( LPCWSTR lpUrl, LPCWSTR lpFilePath )
 			break;
 		dwRecvSize += dwReadSize;
 		if(m_paramsData.callback)
-			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Loading, dwFileSize, dwRecvSize);
+			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpLoading, dwFileSize, dwRecvSize);
 		if ( !::WinHttpQueryDataAvailable(m_hRequest, &dwBytesToRead) )
 			break;
 		if ( dwBytesToRead<= 0 )

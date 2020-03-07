@@ -17,6 +17,7 @@ bool TestWinHttp();
 bool TestSocketHttp();
 bool TestDownloadFile();
 
+//下载文件的回调类，显示下载进度&控制下载
 class CMyCallback
 	: public IHttpCallback
 {
@@ -36,15 +37,12 @@ public:
 	}
 };
 
-//extern "C" __declspec(dllimport ) bool CreateInstance(IHttpBase** pBase, HttpFlag flag);
-
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//TestWinInet();		//测试使用WinInet实现的HTTP接口
 	//TestWinHttp();		//测试使用WinHttp实现的HTTP接口
 	//TestSocketHttp();		//测试使用Socket实现的HTTP接口
-	TestDownloadFile();		//测试下载文件，使用回调接口获取下载进度
+	TestDownloadFile();	//测试下载文件，使用回调接口获取下载进度
 
 	system("pause");
 	//打印出内存泄漏信息
@@ -114,25 +112,31 @@ bool TestWinHttp()
 
 bool TestSocketHttp()
 {
+	//使用winsock之前需要进行初始化
+	InitWSASocket();
 	ISocketHttp* pHttp;
 	bool bRet = CreateInstance((IHttpBase**)&pHttp, TypeSocket);
 	if (!bRet)
 	{
+		UninitWSASocket();
 		return false;
 	}
 	const wchar_t* pUrl = L"www.sogou.com";
 	char* pHtml = NULL;
 	int nSize = 0;
+	//下载网页内容到内存中，该内存由malloc动态申请，使用后需要手动释放
 	if (!pHttp->DownloadToMem(pUrl, (void**)&pHtml, &nSize))
 	{
 		//下载失败
 		pHttp->FreeInstance();
+		UninitWSASocket();
 		return false;
 	}
 	printf("html: %s\n", pHtml);
 	//释放内存空间
 	free(pHtml);
 	pHttp->FreeInstance();
+	UninitWSASocket();
 	return true;
 }
 

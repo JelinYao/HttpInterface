@@ -22,9 +22,9 @@ enum HttpRequest
 //枚举下载状态
 enum DownloadState
 {
-	DS_Loading = 0,
-	DS_Fialed,
-	DS_Finished,
+	HttpLoading = 0,
+	HttpFialed,
+	HttpFinished,
 };
 
 /******************************************************
@@ -89,7 +89,6 @@ public:
 ///////////////////////////////////////////////////////////////////////////////////////
 //HTTP socket类
 
-
 class ISocketHttp
 	:public IHttpBase
 {
@@ -130,6 +129,12 @@ enum InterfaceType
 };
 
 LIB_FUN	bool CreateInstance(IHttpBase** pBase, InterfaceType flag);
+
+//初始化Windows系统网络库：Winsocket2
+LIB_FUN void InitWSASocket();
+
+//卸载系统网络库
+LIB_FUN void UninitWSASocket();
 
 
 

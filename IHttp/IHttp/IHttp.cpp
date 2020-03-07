@@ -28,3 +28,13 @@ LIB_FUN	bool CreateInstance( IHttpBase** pBase, InterfaceType flag )
 	return pInst != NULL;
 }
 
+LIB_FUN void InitWSASocket()
+{
+	WSADATA data;
+	WSAStartup(MAKEWORD(2, 2), &data);
+}
+
+LIB_FUN void UninitWSASocket()
+{
+	WSACleanup();
+}

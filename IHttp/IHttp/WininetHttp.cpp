@@ -188,19 +188,19 @@ bool CWininetHttp::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 				throw HttpErrorWriteFile;
 			uWriteSize += dwReadSize;
 			if (m_paramsData.callback)
-				m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Loading, uFileSize, uWriteSize);
+				m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpLoading, uFileSize, uWriteSize);
 		}
 		fclose(fp);
 		if ( uFileSize!=uWriteSize ) throw HttpErrorDownload;
 		if (m_paramsData.callback)
-			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Finished, uFileSize, uWriteSize);
+			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpFinished, uFileSize, uWriteSize);
 		bResult = true;
 	}
 	catch( HttpInterfaceError error )
 	{
 		m_paramsData.errcode = error;
 		if (m_paramsData.callback)
-			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, DS_Fialed, 0, 0);
+			m_paramsData.callback->OnDownloadCallback(m_paramsData.lpparam, HttpFialed, 0, 0);
 	}
 	if (pBuffer)
 		free(pBuffer);
