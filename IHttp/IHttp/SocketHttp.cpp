@@ -2,11 +2,16 @@
 #include "SocketHttp.h"
 #pragma comment (lib, "ws2_32")
 #include <Shlwapi.h>
+#include "define.h"
 
 
 
 
 /////////////////////////////////////////////////////////////////////////
+CHttpSocket::CHttpHeader::CHttpHeader()
+{
+
+}
 
 CHttpSocket::CHttpHeader::CHttpHeader(const char* pHeader)
 	:m_uReturnValue(0)
@@ -28,10 +33,81 @@ std::string CHttpSocket::CHttpHeader::GetValue(const std::string& strKey)
 {
 	std::string strResult;
 	std::map<std::string, std::string>::const_iterator itor;
-	itor = m_ValueMap.find(strKey);
-	if (itor != m_ValueMap.end())
+	itor = m_headers.find(strKey);
+	if (itor != m_headers.end())
 		strResult = itor->second;
 	return strResult;
+}
+
+void CHttpSocket::CHttpHeader::addHeader(const std::string& key, const std::string& value)
+{
+	if (key.empty() || value.empty()) {
+		return;
+	}
+	m_headers.insert(std::make_pair(key, value));
+}
+
+void CHttpSocket::CHttpHeader::setUserAgent(const std::string& userAgent)
+{
+	if (userAgent.empty()) {
+		return;
+	}
+	m_headers.insert(std::make_pair(HEADER_USER_AGENT, userAgent));
+}
+
+void CHttpSocket::CHttpHeader::setHost(const std::string& host)
+{
+	if (host.empty()) {
+		return;
+	}
+	m_headers.insert(std::make_pair(HEADER_HOST, host));
+}
+
+void CHttpSocket::CHttpHeader::setRange(__int64 range)
+{
+	if (range < 0) {
+		return;
+	}
+	char buffer[64] = { 0 };
+	sprintf_s(buffer, "bytes=%i64d-", range);
+	m_headers.insert(std::make_pair(HEADER_RANGE, std::string(buffer)));
+}
+
+std::string CHttpSocket::CHttpHeader::toString(HttpRequest type)
+{
+	//填充默认值
+	if (m_httpVersion.empty()) {
+		m_httpVersion.assign(default_http_version);
+	}
+	if (m_headers.find(HEADER_USER_AGENT) == m_headers.end()) {
+		m_headers.insert(std::make_pair(HEADER_USER_AGENT, default_user_agent));
+	}
+	if (m_headers.find(HEADER_CONNECTION) == m_headers.end()) {
+		m_headers.insert(std::make_pair(HEADER_USER_AGENT, default_http_version));
+	}
+	if (m_headers.find(HEADER_ACCEPT) == m_headers.end()) {
+		m_headers.insert(std::make_pair(HEADER_ACCEPT, default_accept));
+	}
+	if (m_headers.find(HEADER_CONNECTION) == m_headers.end()) {
+		m_headers.insert(std::make_pair(HEADER_CONNECTION, default_connection));
+	}
+	if (m_headers.find(HEADER_ACCEPT_LANGUAGE) == m_headers.end()) {
+		m_headers.insert(std::make_pair(HEADER_ACCEPT_LANGUAGE, default_language));
+	}
+	std::string header((type == HttpPost)?"POST ":"GET ");
+	header += m_requestPath;
+	header.append(" ");
+	header += m_httpVersion;
+	header.append(http_newline);
+	for (auto itor = m_headers.begin(); itor != m_headers.end(); ++itor) {
+		header += itor->first;
+		header.append(": ");
+		header += itor->second;
+		header.append(http_newline);
+	}
+	header.append(http_newline);
+	header.append(http_newline);
+	return header;
 }
 
 bool CHttpSocket::CHttpHeader::Revolse(const std::string& strHeader)
@@ -50,10 +126,7 @@ bool CHttpSocket::CHttpHeader::Revolse(const std::string& strHeader)
 		}
 		if (0 == nLineIndex)//第一行
 		{
-			strncpy_s(m_szHttpVersion, strLine.c_str(), 8);
-			m_szHttpVersion[8] = '\0';
-			if (strcmp(m_szHttpVersion, "HTTP/1.1") != 0)
-				return false;
+			m_httpVersion = strLine.substr(0, 8);
 			int nSpace1 = strLine.find(" ");
 			int nSpace2 = strLine.find(" ", nSpace1 + 1);
 			m_uReturnValue = atoi(strLine.substr(nSpace1 + 1, nSpace2 - nSpace1 - 1).c_str());
@@ -67,7 +140,7 @@ bool CHttpSocket::CHttpHeader::Revolse(const std::string& strHeader)
 		std::pair<std::string, std::string> data;
 		data.first = strKey;
 		data.second = strValue;
-		m_ValueMap.insert(std::move(data));
+		m_headers.insert(std::move(data));
 		nLineIndex++;
 	} while (nFindPos != -1);
 	return true;
@@ -140,14 +213,19 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 		wstring strHostName, strPage;
 		u_short uPort = 80;
 		MyParseUrlW(lpUrl, strHostName, strPage, uPort);
-		string str = U2A(strHostName);
-		if (!InitSocket(str, uPort))
+		if (uPort == 443) {
+			//抱歉，socket方式暂时不支持HTTPS协议
+			return false;
+		}
+		string host = U2A(strHostName);
+		if (!InitSocket(host, uPort))
 			throw L"";
-		HTTP_HERDER header;
-		strcpy_s(header.szHostName, str.c_str());
+		CHttpHeader header;
+		header.setHost(host);
+		//这里可能会重定向回来
 	__request:
-		InitRequestHeader(header, U2A(strPage).c_str());
-		std::string strSend = header.ToString();
+		header.setRequestPath(U2A(strPage));
+		std::string strSend = header.toString(HttpGet);
 		int nRet = send(m_socket, strSend.c_str(), strSend.size(), 0);
 		if (SOCKET_ERROR == nRet)
 			throw HttpErrorSend;
@@ -159,12 +237,12 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 		_wfopen_s(&fp, lpFilePath, L"wb+");
 		if (NULL == fp)
 			throw HttpErrorCreateFile;
-		pBuffer = (BYTE*)malloc(DOWNLOAD_BUFFER_SIZE + 1);
+		pBuffer = (BYTE*)malloc(READ_BUFFER_SIZE + 1);
 		do
 		{
 			if (m_paramsData.callback && m_paramsData.callback->IsNeedStop())
 				throw HttpErrorUserCancel;
-			nRecvSize = recv(m_socket, (char*)pBuffer, DOWNLOAD_BUFFER_SIZE, 0);
+			nRecvSize = recv(m_socket, (char*)pBuffer, READ_BUFFER_SIZE, 0);
 			if (SOCKET_ERROR == nRecvSize)
 				throw HttpErrorSocket;
 			if (nRecvSize>0)
@@ -186,7 +264,7 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 					}
 					if (nHttpValue>300 && nHttpValue<400)//重定向
 					{
-						wstring strReLoadUrl = A2U(header.GetValue("location"));
+						wstring strReLoadUrl = A2U(header.GetValue(HEADER_LOCATION));
 						if (strReLoadUrl.find(L"http://") != 0)
 						{
 							strPage = strReLoadUrl;
@@ -204,7 +282,7 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 						fp = NULL;
 						return DownloadFile(strReLoadUrl.c_str(), lpFilePath);
 					}
-					nFileSize = atof(header.GetValue("Content-Length").c_str());
+					nFileSize = atof(header.GetValue(HEADER_CONTENT_LENGTH).c_str());
 					nWriteSize = nRecvSize - nPos - 4;
 					if (nWriteSize>0)
 					{
@@ -279,14 +357,19 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 		wstring strHostName, strPage;
 		u_short uPort = 80;
 		MyParseUrlW(lpUrl, strHostName, strPage, uPort);
-		string str = U2A(strHostName);
-		if (!InitSocket(str, uPort))
+		if (uPort == 443) {
+			//抱歉，socket方式暂时不支持HTTPS协议
+			return false;
+		}
+		string host = U2A(strHostName);
+		if (!InitSocket(host, uPort))
 			throw HttpErrorInit;
-		HTTP_HERDER header;
-		strcpy_s(header.szHostName, str.c_str());
+		CHttpHeader header;
+		header.setHost(host);
+		//这里可能会重定向回来
 	__request:
-		InitRequestHeader(header, U2A(strPage).c_str());
-		std::string strSend = header.ToString();
+		header.setRequestPath(U2A(strPage));
+		std::string strSend = header.toString(HttpGet);
 		int nRet = send(m_socket, strSend.c_str(), strSend.size(), 0);
 		if (SOCKET_ERROR == nRet)
 			throw HttpErrorSend;
@@ -317,10 +400,10 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 				}
 				if (nHttpValue>300 && nHttpValue<400)//重定向
 				{
-					wstring strReLoadUrl = A2U(header.GetValue("location"));
-					if (strReLoadUrl.find(L"http://") != 0)
+					wstring reloadUrl = A2U(header.GetValue(HEADER_LOCATION));
+					if (reloadUrl.find(L"http://") != 0 && reloadUrl.find(L"https://") != 0)
 					{
-						strPage = strReLoadUrl;
+						strPage = reloadUrl;
 						goto __request;
 					}
 					if (INVALID_SOCKET != m_socket)
@@ -328,9 +411,9 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 						closesocket(m_socket);
 						m_socket = INVALID_SOCKET;
 					}
-					return DownloadToMem(strReLoadUrl.c_str(), ppBuffer, nSize);
+					return DownloadToMem(reloadUrl.c_str(), ppBuffer, nSize);
 				}
-				nFileSize = atoi(header.GetValue("Content-Length").c_str());
+				nFileSize = atoi(header.GetValue(HEADER_CONTENT_LENGTH).c_str());
 				*nSize = nFileSize;
 				if (nFileSize>DOWNLOAD_BUFFER_SIZE || nFileSize <= 0)
 					throw HttpErrorBuffer;
@@ -374,20 +457,4 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 		*ppBuffer = pBuffer;
 	}
 	return bResult;
-}
-
-void CHttpSocket::InitRequestHeader(HTTP_HERDER& header, const char* pRequest, HttpRequest type/*=get*/, LPCSTR pRange/*=NULL*/, LPCSTR pAccept/*="* / *"*/)
-{
-	memset(header.szType, 0, 5);
-	if (HttpGet == type)
-		strcpy_s(header.szType, "GET");
-	else
-		strcpy_s(header.szType, "POST");
-	memset(header.szRequest, 0, MAX_PATH);
-	strcpy_s(header.szRequest, pRequest);
-	memset(header.szAccept, 0, 100);
-	strcpy_s(header.szAccept, pAccept);
-	memset(header.szRange, 0, 11);
-	if (pRange)
-		strcpy_s(header.szRange, pRange);
 }

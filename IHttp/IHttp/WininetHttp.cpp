@@ -164,7 +164,7 @@ bool CWininetHttp::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 		if ( !bRet ) throw HttpErrorQuery;
 		szBuffer[dwReadSize] = '\0';
 		const double uFileSize = atof(szBuffer);
-		int nMallocSize = uFileSize<DOWNLOAD_BUFFER_SIZE? (int)uFileSize:DOWNLOAD_BUFFER_SIZE;
+		int nMallocSize = uFileSize< READ_BUFFER_SIZE ? (int)uFileSize: READ_BUFFER_SIZE;
 		pBuffer = (BYTE*)malloc(nMallocSize);
 		int nFindPos = 0;
 		wstring strSavePath(lpFilePath);

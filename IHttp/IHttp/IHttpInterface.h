@@ -49,7 +49,7 @@ enum HttpInterfaceError
 	HttpErrorHeader,			//HTTP请求头错误
 	HttpErrorParam,				//参数错误，空指针，空字符……
 	HttpErrorWriteFile,			//写入文件失败
-	HttpErrorUnknow,
+	HttpErrorUnknow,			//未知错误
 
 };
 
@@ -111,9 +111,9 @@ public:
 /////////////////////////////////////////////////////////////////////////////////
 //DLL的导出函数声明
 #ifdef _USRDLL//导出库
-		#define LIB_FUN extern "C" __declspec(dllexport)
+		#define LIB_FUNCTION extern "C" __declspec(dllexport)
 	#else
-		#define LIB_FUN extern "C" __declspec(dllimport)
+		#define LIB_FUNCTION extern "C" __declspec(dllimport)
 #endif
 /***********************************************************
 *声明导出函数部分
@@ -128,13 +128,13 @@ enum InterfaceType
 	TypeWinHttp,
 };
 
-LIB_FUN	bool CreateInstance(IHttpBase** pBase, InterfaceType flag);
+LIB_FUNCTION bool CreateInstance(IHttpBase** pBase, InterfaceType flag);
 
 //初始化Windows系统网络库：Winsocket2
-LIB_FUN void InitWSASocket();
+LIB_FUNCTION void InitWSASocket();
 
 //卸载系统网络库
-LIB_FUN void UninitWSASocket();
+LIB_FUNCTION void UninitWSASocket();
 
 
 

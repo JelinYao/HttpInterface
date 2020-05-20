@@ -6,7 +6,6 @@
 #include "../Common.h"
 
 
-#define HTTP_READBUF_LEN	1024*1024		//1M的接收缓冲区
 
 inline void CloseInternetHandle(HINTERNET* hInternet)
 {
@@ -123,10 +122,10 @@ bool CWinHttp::DownloadFile( LPCWSTR lpUrl, LPCWSTR lpFilePath )
 		DeleteFile(lpFilePath);
 		return false;
 	}
-	void* lpBuff = malloc(HTTP_READBUF_LEN);
+	void* lpBuff = malloc(READ_BUFFER_SIZE);
 	while( true )
 	{
-		if ( dwBytesToRead>HTTP_READBUF_LEN )
+		if ( dwBytesToRead> READ_BUFFER_SIZE)
 		{
 			free(lpBuff);
 			lpBuff = malloc(dwBytesToRead);
@@ -174,11 +173,13 @@ bool CWinHttp::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)
 			throw HttpError404;
 		if ( !::WinHttpQueryDataAvailable(m_hRequest, &dwBytesToRead) )
 			throw HttpErrorQuery;
+		if (dwLength > DOWNLOAD_BUFFER_SIZE)
+			throw HttpErrorBuffer;//文件大小超过预设最大值，不建议下载到内存
 		lpFileMem = (BYTE*)malloc(dwLength);
-		lpBuff = malloc(HTTP_READBUF_LEN);
+		lpBuff = malloc(READ_BUFFER_SIZE);
 		while( true )
 		{
-			if ( dwBytesToRead>HTTP_READBUF_LEN )
+			if ( dwBytesToRead> READ_BUFFER_SIZE)
 			{
 				free(lpBuff);
 				lpBuff = malloc(dwBytesToRead);
@@ -225,7 +226,7 @@ string CWinHttp::Request( LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData /*= 
 	if (!InitConnect(strUrl.c_str(), type, lpPostData, (lpHeader == NULL) ? NULL : A2U(string(lpHeader)).c_str()))
 		return strRet;
 	DWORD dwBytesToRead, dwReadSize;
-	void* lpBuff = malloc(HTTP_READBUF_LEN);
+	void* lpBuff = malloc(READ_BUFFER_SIZE);
 	bool bFinish = false;
 	while ( true )
 	{
@@ -236,7 +237,7 @@ string CWinHttp::Request( LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData /*= 
 			bFinish = true;
 			break;
 		}
-		if ( dwBytesToRead>HTTP_READBUF_LEN )
+		if ( dwBytesToRead> READ_BUFFER_SIZE)
 		{
 			free(lpBuff);
 			lpBuff = malloc(dwBytesToRead);
@@ -257,7 +258,7 @@ string CWinHttp::Request( LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData /*=
 	if ( !InitConnect(lpUrl, type, lpPostData, lpHeader) )
 		return strRet;
 	DWORD dwBytesToRead, dwReadSize;
-	void* lpBuff = malloc(HTTP_READBUF_LEN);
+	void* lpBuff = malloc(READ_BUFFER_SIZE);
 	bool bFinish = false;
 	while ( true )
 	{
@@ -268,7 +269,7 @@ string CWinHttp::Request( LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData /*=
 			bFinish = true;
 			break;
 		}
-		if ( dwBytesToRead>HTTP_READBUF_LEN )
+		if ( dwBytesToRead> READ_BUFFER_SIZE)
 		{
 			free(lpBuff);
 			lpBuff = malloc(dwBytesToRead);

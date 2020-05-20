@@ -39,10 +39,10 @@ public:
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//TestWinInet();		//测试使用WinInet实现的HTTP接口
+	TestWinInet();		//测试使用WinInet实现的HTTP接口
 	//TestWinHttp();		//测试使用WinHttp实现的HTTP接口
 	//TestSocketHttp();		//测试使用Socket实现的HTTP接口
-	TestDownloadFile();	//测试下载文件，使用回调接口获取下载进度
+	//TestDownloadFile();	//测试下载文件，使用回调接口获取下载进度
 
 	system("pause");
 	//打印出内存泄漏信息
@@ -104,7 +104,7 @@ bool TestWinHttp()
 	}
 	else
 	{
-		printf("%s html : %s", pUrl, strHtml.c_str());
+		printf("%s html : %s\n", pUrl, strHtml.c_str());
 	}
 	pHttp->FreeInstance();
 	return true;

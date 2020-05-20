@@ -1,8 +1,5 @@
 #pragma once
 
-//每次读取的字节数
-#define READ_BUFFER_SIZE		4096
-
 
 class CWininetHttp
 	: public IWininetHttp

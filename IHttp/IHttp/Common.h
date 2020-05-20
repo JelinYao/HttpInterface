@@ -32,8 +32,10 @@ inline void MyParseUrlW( LPCWSTR lpUrl, wstring& strHostName, wstring& strPage, 
 		strHostName = strHostName.substr(0, nPos1);
 		sPort = (WORD)_wtoi(strPort.c_str());
 	}
-	if ( wstring::npos == nPos )
-		return ;
+	if (wstring::npos == nPos) {
+		strPage = '/';
+		return;
+	}
 	strPage = strTemp.substr(nPos, strTemp.size() - nPos);
 }
 
@@ -65,8 +67,10 @@ inline void MyParseUrlA( LPCSTR lpUrl, string& strHostName, string& strPage, WOR
 		strHostName = strHostName.substr(0, nPos1);
 		sPort = (WORD)atoi(strPort.c_str());
 	}
-	if ( string::npos == nPos )
-		return ;
+	if (string::npos == nPos) {
+		strPage = '/';
+		return;
+	}
 	strPage = strTemp.substr(nPos, strTemp.size() - nPos);
 }
 

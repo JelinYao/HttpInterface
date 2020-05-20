@@ -12,11 +12,9 @@
 #include <windows.h>
 
 #include "Common.h"
-#include "Http.h"
-
+#include "define.h"
 // TODO: 在此处引用程序需要的其他头文件
 
 #ifndef HINTERNET
 #define HINTERNET LPVOID
 #endif
-#define DOWNLOAD_BUFFER_SIZE	8*1024*1024	//8M的缓存
