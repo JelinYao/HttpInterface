@@ -67,11 +67,12 @@ public:
 class IHttpBase
 {
 public:
-	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam)				= 0;
-	virtual bool	DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)							= 0;
-	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)		= 0;
-	virtual void	FreeInstance()															= 0;
-	virtual HttpInterfaceError GetErrorCode()												= 0;
+	virtual void SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
+	virtual bool DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)= 0;
+	virtual bool DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)= 0;
+	virtual void FreeInstance()= 0;
+	virtual HttpInterfaceError GetErrorCode()= 0;
+	virtual void AddHeader(LPCSTR key, LPCSTR value) = 0;//ÃÌº”HTTP«Î«ÛÕ∑
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

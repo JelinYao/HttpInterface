@@ -1,4 +1,5 @@
 #pragma once
+#include "../httpHeader.h"
 
 
 
@@ -17,6 +18,7 @@ public:
 	virtual bool	DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize);
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam);
 	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
+	virtual void AddHeader(LPCSTR key, LPCSTR value);
 
 protected:
 	bool	Init();
@@ -38,6 +40,7 @@ private:
 	int			m_nConnTimeout;
 	int			m_nSendTimeout;
 	int			m_nRecvTimeout;
+	CHttpHeader m_header;
 	HttpParamsData m_paramsData;
 };
 

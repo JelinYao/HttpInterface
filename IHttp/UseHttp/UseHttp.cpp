@@ -39,9 +39,9 @@ public:
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	TestWinInet();		//测试使用WinInet实现的HTTP接口
+	//TestWinInet();		//测试使用WinInet实现的HTTP接口
 	//TestWinHttp();		//测试使用WinHttp实现的HTTP接口
-	//TestSocketHttp();		//测试使用Socket实现的HTTP接口
+	TestSocketHttp();		//测试使用Socket实现的HTTP接口
 	//TestDownloadFile();	//测试下载文件，使用回调接口获取下载进度
 
 	system("pause");
@@ -61,6 +61,9 @@ bool TestWinInet()
 	char* pMem = NULL;
 	int nSize = 0;
 	const wchar_t* pUrl = L"https://blog.csdn.net/mfcing";
+	//添加自定义http头信息
+	pHttp->AddHeader("name", "Jelin");
+	pHttp->AddHeader("address", "Shanghai");
 	string str = pHttp->Request(pUrl, HttpGet);
 	if (str.empty())
 	{
@@ -82,6 +85,8 @@ bool TestWinInet()
 		pHttp->FreeInstance();
 		return false;
 	}
+	//测试post请求
+	std::string ret = pHttp->Request("https://chat.jelinyao.cn/postTest", HttpPost, "{\"name\":\"Jelin\",\"address\":\"Shanghai\"}");
 	pHttp->FreeInstance();
 	return true;
 }
@@ -95,6 +100,9 @@ bool TestWinHttp()
 		return false;
 	}
 	const char* pUrl = "https://www.qq.com";
+	//添加自定义http头信息
+	pHttp->AddHeader("name", "Jelin");
+	pHttp->AddHeader("address", "Shanghai");
 	string strHtml = pHttp->Request(pUrl, HttpGet);
 	if (strHtml.empty())
 	{
@@ -106,6 +114,8 @@ bool TestWinHttp()
 	{
 		printf("%s html : %s\n", pUrl, strHtml.c_str());
 	}
+	//测试post请求
+	std::string ret = pHttp->Request("https://chat.jelinyao.cn/postTest", HttpPost, "{\"name\":\"Jelin\",\"address\":\"Shanghai\"}");
 	pHttp->FreeInstance();
 	return true;
 }
@@ -121,9 +131,12 @@ bool TestSocketHttp()
 		UninitWSASocket();
 		return false;
 	}
-	const wchar_t* pUrl = L"www.sogou.com";
+	const wchar_t* pUrl = L"http://www.hbsrsksy.cn/";
 	char* pHtml = NULL;
 	int nSize = 0;
+	//添加自定义http头信息
+	pHttp->AddHeader("name", "Jelin");
+	pHttp->AddHeader("address", "Shanghai");
 	//下载网页内容到内存中，该内存由malloc动态申请，使用后需要手动释放
 	if (!pHttp->DownloadToMem(pUrl, (void**)&pHtml, &nSize))
 	{

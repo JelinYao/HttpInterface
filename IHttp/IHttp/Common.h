@@ -138,3 +138,11 @@ inline bool FileExistW(LPCWSTR lpFile)
 	CloseHandle(hFile);
 	return true;
 }
+
+inline bool isEmptyString(LPCSTR lpStr)
+{
+	if (NULL == lpStr || strlen(lpStr) == 0) {
+		return true;
+	}
+	return false;
+}

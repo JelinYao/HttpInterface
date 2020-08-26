@@ -1,4 +1,6 @@
 #pragma once
+#include <map>
+#include "httpHeader.h"
 
 
 class CWininetHttp
@@ -14,6 +16,7 @@ public:
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam);
 	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
 	virtual	void	FreeInstance() { delete this; }
+	virtual void AddHeader(LPCSTR key, LPCSTR value);
 	
 protected:
 	//¹Ø±Õ¾ä±ú
@@ -25,5 +28,6 @@ private:
 	HINTERNET	m_hSession;
 	HINTERNET	m_hConnect;
 	HINTERNET	m_hRequest;
+	CHttpHeader m_header;
 	HttpParamsData m_paramsData;
 };

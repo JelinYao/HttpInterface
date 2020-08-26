@@ -42,6 +42,9 @@
     <ClCompile Include="WinHttp\HttpClient.cpp">
       <Filter>WinHttp</Filter>
     </ClCompile>
+    <ClCompile Include="httpHeader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -69,6 +72,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="define.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="httpHeader.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

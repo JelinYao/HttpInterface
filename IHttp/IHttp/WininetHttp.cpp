@@ -46,7 +46,9 @@ string CWininetHttp::Request( LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData/
 			throw HttpErrorInit;
 		BOOL bRet = FALSE;
 		DWORD dwHeaderSize = (NULL == lpHeader) ? 0 : strlen(lpHeader);
-		DWORD dwSize = (lpPostData == NULL) ? 0 : strlen(lpPostData);
+		DWORD dwSize = (lpPostData == NULL) ? 0 : strlen(lpPostData); 
+		std::string httpHeaders = m_header.toHttpHeaders();
+		HttpAddRequestHeadersA(m_hRequest, httpHeaders.c_str(), httpHeaders.size(), HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 		bRet = HttpSendRequestA(m_hRequest, lpHeader, dwHeaderSize, (LPVOID)lpPostData, dwSize);
 		if ( !bRet )
 			throw HttpErrorSend;
@@ -67,6 +69,7 @@ string CWininetHttp::Request( LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData/
 	}
 	catch(HttpInterfaceError error)
 	{
+		DWORD code = GetLastError();
 		m_paramsData.errcode = error;
 	}
 	return strRet;
@@ -100,6 +103,8 @@ string CWininetHttp::Request( LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData
 		BOOL bRet = FALSE;
 		DWORD dwHeaderSize = (NULL == lpHeader) ? 0 : wcslen(lpHeader);
 		DWORD dwSize = (lpPostData == NULL) ? 0 : strlen(lpPostData);
+		std::string httpHeaders = m_header.toHttpHeaders();
+		HttpAddRequestHeadersA(m_hRequest, httpHeaders.c_str(), httpHeaders.size(), HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 		bRet = HttpSendRequestW(m_hRequest, lpHeader, dwHeaderSize, (LPVOID)lpPostData, dwSize);
 		if (!bRet)
 			throw HttpErrorSend;
@@ -151,6 +156,8 @@ bool CWininetHttp::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 			dwFlags |= (INTERNET_FLAG_SECURE | INTERNET_FLAG_IGNORE_CERT_DATE_INVALID);
 		m_hRequest = HttpOpenRequestW(m_hConnect, L"GET", strPageName.c_str(), L"HTTP/1.1", NULL, NULL, dwFlags, NULL);
 		if ( NULL == m_hRequest ) throw HttpErrorInit;
+		std::string httpHeaders = m_header.toHttpHeaders();
+		HttpAddRequestHeadersA(m_hRequest, httpHeaders.c_str(), httpHeaders.size(), HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 		BOOL bRet = HttpSendRequestW(m_hRequest, NULL, 0, NULL, 0);
 		if ( !bRet ) throw HttpErrorSend;
 		char szBuffer[1024+1] = {0};
@@ -232,6 +239,8 @@ bool CWininetHttp::DownloadToMem( LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* n
 			dwFlags |= (INTERNET_FLAG_SECURE | INTERNET_FLAG_IGNORE_CERT_DATE_INVALID);
 		m_hRequest = HttpOpenRequestW(m_hConnect, L"GET", strPageName.c_str(), L"HTTP/1.1", NULL, NULL, dwFlags, NULL);
 		if ( NULL == m_hRequest ) throw HttpErrorInit;
+		std::string httpHeaders = m_header.toHttpHeaders();
+		HttpAddRequestHeadersA(m_hRequest, httpHeaders.c_str(), httpHeaders.size(), HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 		BOOL bRet = HttpSendRequestW(m_hRequest, NULL, 0, NULL, 0);
 		if ( !bRet ) throw HttpErrorSend;
 		wchar_t szBuffer[1024+1] = {0};
@@ -288,6 +297,14 @@ void CWininetHttp::SetDownloadCallback(IHttpCallback* pCallback, void* pParam)
 {
 	m_paramsData.callback = pCallback;
 	m_paramsData.lpparam = pParam;
+}
+
+void CWininetHttp::AddHeader(LPCSTR key, LPCSTR value)
+{
+	if (isEmptyString(key) || isEmptyString(value)) {
+		return;
+	}
+	m_header.addHeader(std::string(key), std::string(value));
 }
 
 void CWininetHttp::ReleaseHandle( HINTERNET& hInternet )
