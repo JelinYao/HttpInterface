@@ -39,9 +39,9 @@ public:
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//TestWinInet();		//测试使用WinInet实现的HTTP接口
+	TestWinInet();		//测试使用WinInet实现的HTTP接口
 	//TestWinHttp();		//测试使用WinHttp实现的HTTP接口
-	TestSocketHttp();		//测试使用Socket实现的HTTP接口
+	//TestSocketHttp();		//测试使用Socket实现的HTTP接口
 	//TestDownloadFile();	//测试下载文件，使用回调接口获取下载进度
 
 	system("pause");
@@ -65,6 +65,7 @@ bool TestWinInet()
 	pHttp->AddHeader("name", "Jelin");
 	pHttp->AddHeader("address", "Shanghai");
 	string str = pHttp->Request(pUrl, HttpGet);
+	int http_code = pHttp->GetResponseCode();
 	if (str.empty())
 	{
 		//请求失败
@@ -104,6 +105,7 @@ bool TestWinHttp()
 	pHttp->AddHeader("name", "Jelin");
 	pHttp->AddHeader("address", "Shanghai");
 	string strHtml = pHttp->Request(pUrl, HttpGet);
+	int http_code = pHttp->GetResponseCode();
 	if (strHtml.empty())
 	{
 		//请求失败
@@ -131,7 +133,7 @@ bool TestSocketHttp()
 		UninitWSASocket();
 		return false;
 	}
-	const wchar_t* pUrl = L"http://www.hbsrsksy.cn/";
+	const wchar_t* pUrl = L"http://www.hbsrsksy.cn/hdhdhd";
 	char* pHtml = NULL;
 	int nSize = 0;
 	//添加自定义http头信息
@@ -141,6 +143,7 @@ bool TestSocketHttp()
 	if (!pHttp->DownloadToMem(pUrl, (void**)&pHtml, &nSize))
 	{
 		//下载失败
+		int http_code = pHttp->GetResponseCode();
 		pHttp->FreeInstance();
 		UninitWSASocket();
 		return false;

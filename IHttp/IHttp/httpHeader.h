@@ -10,16 +10,17 @@ public:
 	CHttpHeader();
 	CHttpHeader(const char* pHeader);
 	CHttpHeader(const std::string& strHeader);
+	CHttpHeader(CHttpHeader&& rhs);
 	virtual	~CHttpHeader(void);
 
 
-	const std::string& getHttpVersion()const { return m_httpVersion; }
-	void setHttpVersion(const std::string& version) { m_httpVersion = version; }
-	void setRequestPath(const std::string& path) { m_requestPath = path; }
+	const std::string& getHttpVersion()const { return http_version_; }
+	void setHttpVersion(const std::string& version) { http_version_ = version; }
+	void setRequestPath(const std::string& path) { request_page_ = path; }
 
-	const int GetReturnValue()const { return m_uReturnValue; }
+	const int GetHttpCode()const { return http_code_; }
 
-	const char*	GetContent()const { return m_strContent.c_str(); }
+	const char*	GetContent()const { return http_response_.c_str(); }
 
 	std::string	GetValue(const std::string& strKey);
 
@@ -38,9 +39,9 @@ protected:
 	bool Revolse(const std::string& strHeader);
 
 private:
-	int	 m_uReturnValue;
-	std::string m_httpVersion;
-	std::string	m_strContent;
-	std::string m_requestPath;
-	std::map<std::string, std::string>	m_headers;
+	int	 http_code_;
+	std::string http_version_;
+	std::string	http_response_;
+	std::string request_page_;
+	std::map<std::string, std::string>	http_headers;
 };

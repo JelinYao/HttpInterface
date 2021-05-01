@@ -4,20 +4,30 @@
 
 
 CHttpHeader::CHttpHeader()
+	: http_code_(0)
 {
 
 }
 
 CHttpHeader::CHttpHeader(const char* pHeader)
-	:m_uReturnValue(0)
+	: http_code_(0)
 {
 	Revolse(std::string(pHeader));
 }
 
 CHttpHeader::CHttpHeader(const std::string& strHeader)
-	: m_uReturnValue(0)
+	: http_code_(0)
 {
 	Revolse(strHeader);
+}
+
+CHttpHeader::CHttpHeader(CHttpHeader&& rhs)
+{
+	this->http_code_ = rhs.http_code_;
+	this->http_version_ = std::move(rhs.http_version_);
+	this->http_response_ = std::move(rhs.http_response_);
+	this->request_page_ = std::move(rhs.request_page_);
+	this->http_headers = std::move(rhs.http_headers);
 }
 
 CHttpHeader::~CHttpHeader(void)
@@ -28,8 +38,8 @@ std::string CHttpHeader::GetValue(const std::string& strKey)
 {
 	std::string strResult;
 	std::map<std::string, std::string>::const_iterator itor;
-	itor = m_headers.find(strKey);
-	if (itor != m_headers.end())
+	itor = http_headers.find(strKey);
+	if (itor != http_headers.end())
 		strResult = itor->second;
 	return strResult;
 }
@@ -39,7 +49,7 @@ void CHttpHeader::addHeader(const std::string& key, const std::string& value)
 	if (key.empty() || value.empty()) {
 		return;
 	}
-	m_headers.insert(std::make_pair(key, value));
+	http_headers.insert(std::make_pair(key, value));
 }
 
 void CHttpHeader::setUserAgent(const std::string& userAgent)
@@ -47,7 +57,7 @@ void CHttpHeader::setUserAgent(const std::string& userAgent)
 	if (userAgent.empty()) {
 		return;
 	}
-	m_headers.insert(std::make_pair(HEADER_USER_AGENT, userAgent));
+	http_headers.insert(std::make_pair(HEADER_USER_AGENT, userAgent));
 }
 
 void CHttpHeader::setHost(const std::string& host)
@@ -55,7 +65,7 @@ void CHttpHeader::setHost(const std::string& host)
 	if (host.empty()) {
 		return;
 	}
-	m_headers.insert(std::make_pair(HEADER_HOST, host));
+	http_headers.insert(std::make_pair(HEADER_HOST, host));
 }
 
 void CHttpHeader::setRange(__int64 range)
@@ -65,36 +75,36 @@ void CHttpHeader::setRange(__int64 range)
 	}
 	char buffer[64] = { 0 };
 	sprintf_s(buffer, "bytes=%i64d-", range);
-	m_headers.insert(std::make_pair(HEADER_RANGE, std::string(buffer)));
+	http_headers.insert(std::make_pair(HEADER_RANGE, std::string(buffer)));
 }
 
 std::string CHttpHeader::toString(HttpRequest type)
 {
 	//填充默认值
-	if (m_httpVersion.empty()) {
-		m_httpVersion.assign(default_http_version);
+	if (http_version_.empty()) {
+		http_version_.assign(default_http_version);
 	}
-	if (m_headers.find(HEADER_USER_AGENT) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_USER_AGENT, default_user_agent));
+	if (http_headers.find(HEADER_USER_AGENT) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_USER_AGENT, default_user_agent));
 	}
-	if (m_headers.find(HEADER_CONNECTION) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_USER_AGENT, default_http_version));
+	if (http_headers.find(HEADER_CONNECTION) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_USER_AGENT, default_http_version));
 	}
-	if (m_headers.find(HEADER_ACCEPT) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_ACCEPT, default_accept));
+	if (http_headers.find(HEADER_ACCEPT) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_ACCEPT, default_accept));
 	}
-	if (m_headers.find(HEADER_CONNECTION) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_CONNECTION, default_connection));
+	if (http_headers.find(HEADER_CONNECTION) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_CONNECTION, default_connection));
 	}
-	if (m_headers.find(HEADER_ACCEPT_LANGUAGE) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_ACCEPT_LANGUAGE, default_language));
+	if (http_headers.find(HEADER_ACCEPT_LANGUAGE) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_ACCEPT_LANGUAGE, default_language));
 	}
 	std::string header((type == HttpPost) ? "POST " : "GET ");
-	header += m_requestPath;
+	header += request_page_;
 	header.append(" ");
-	header += m_httpVersion;
+	header += http_version_;
 	header.append(http_newline);
-	for (auto itor = m_headers.begin(); itor != m_headers.end(); ++itor) {
+	for (auto itor = http_headers.begin(); itor != http_headers.end(); ++itor) {
 		header += itor->first;
 		header.append(": ");
 		header += itor->second;
@@ -107,23 +117,23 @@ std::string CHttpHeader::toString(HttpRequest type)
 
 std::string CHttpHeader::toHttpHeaders()
 {
-	if (m_headers.find(HEADER_USER_AGENT) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_USER_AGENT, default_user_agent));
+	if (http_headers.find(HEADER_USER_AGENT) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_USER_AGENT, default_user_agent));
 	}
-	if (m_headers.find(HEADER_CONNECTION) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_USER_AGENT, default_http_version));
+	if (http_headers.find(HEADER_CONNECTION) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_USER_AGENT, default_http_version));
 	}
-	if (m_headers.find(HEADER_ACCEPT) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_ACCEPT, default_accept));
+	if (http_headers.find(HEADER_ACCEPT) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_ACCEPT, default_accept));
 	}
-	if (m_headers.find(HEADER_CONNECTION) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_CONNECTION, default_connection));
+	if (http_headers.find(HEADER_CONNECTION) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_CONNECTION, default_connection));
 	}
-	if (m_headers.find(HEADER_ACCEPT_LANGUAGE) == m_headers.end()) {
-		m_headers.insert(std::make_pair(HEADER_ACCEPT_LANGUAGE, default_language));
+	if (http_headers.find(HEADER_ACCEPT_LANGUAGE) == http_headers.end()) {
+		http_headers.insert(std::make_pair(HEADER_ACCEPT_LANGUAGE, default_language));
 	}
 	std::string header;
-	for (auto itor = m_headers.begin(); itor != m_headers.end(); ++itor) {
+	for (auto itor = http_headers.begin(); itor != http_headers.end(); ++itor) {
 		header += itor->first;
 		header.append(": ");
 		header += itor->second;
@@ -148,11 +158,11 @@ bool CHttpHeader::Revolse(const std::string& strHeader)
 		}
 		if (0 == nLineIndex)//第一行
 		{
-			m_httpVersion = strLine.substr(0, 8);
+			http_version_ = strLine.substr(0, 8);
 			int nSpace1 = strLine.find(" ");
 			int nSpace2 = strLine.find(" ", nSpace1 + 1);
-			m_uReturnValue = atoi(strLine.substr(nSpace1 + 1, nSpace2 - nSpace1 - 1).c_str());
-			m_strContent = strLine.substr(nSpace2 + 1, strLine.size() - nSpace2 - 1);
+			http_code_ = atoi(strLine.substr(nSpace1 + 1, nSpace2 - nSpace1 - 1).c_str());
+			http_response_ = strLine.substr(nSpace2 + 1, strLine.size() - nSpace2 - 1);
 			nLineIndex++;
 			continue;
 		}
@@ -162,7 +172,7 @@ bool CHttpHeader::Revolse(const std::string& strHeader)
 		std::pair<std::string, std::string> data;
 		data.first = strKey;
 		data.second = strValue;
-		m_headers.insert(std::move(data));
+		http_headers.insert(std::move(data));
 		nLineIndex++;
 	} while (nFindPos != -1);
 	return true;

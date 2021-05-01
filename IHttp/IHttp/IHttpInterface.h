@@ -60,19 +60,20 @@ enum HttpInterfaceError
 class IHttpCallback
 {
 public:
-	virtual void	OnDownloadCallback(void* pParam, DownloadState state, double nTotalSize, double nLoadSize)		= 0;
-	virtual bool	IsNeedStop()																					= 0;
+	virtual void	OnDownloadCallback(void* pParam, DownloadState state, double nTotalSize, double nLoadSize) = 0;
+	virtual bool	IsNeedStop() = 0;
 };
 
 class IHttpBase
 {
 public:
-	virtual void SetDownloadCallback(IHttpCallback* pCallback, void* pParam)= 0;
-	virtual bool DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)= 0;
-	virtual bool DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize)= 0;
-	virtual void FreeInstance()= 0;
-	virtual HttpInterfaceError GetErrorCode()= 0;
+	virtual void SetDownloadCallback(IHttpCallback* pCallback, void* pParam) = 0;
+	virtual bool DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath) = 0;
+	virtual bool DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize) = 0;
+	virtual void FreeInstance() = 0;
+	virtual HttpInterfaceError GetErrorCode() = 0;
 	virtual void AddHeader(LPCSTR key, LPCSTR value) = 0;//添加HTTP请求头
+	virtual int GetResponseCode() = 0;// 获取HTTP服务器返回码
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -82,8 +83,8 @@ class IWininetHttp
 {
 public:
 	//HTTP请求功能
-	virtual string	Request(LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCSTR lpHeader = NULL)			= 0;
-	virtual string	Request(LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCWSTR lpHeader = NULL)			= 0;
+	virtual string	Request(LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCSTR lpHeader = NULL) = 0;
+	virtual string	Request(LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData = NULL, LPCWSTR lpHeader = NULL) = 0;
 };
 
 
@@ -94,7 +95,7 @@ class ISocketHttp
 	:public IHttpBase
 {
 public:
-	virtual LPCWSTR	GetIpAddr()const	= 0;
+	virtual LPCWSTR	GetIpAddr()const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +105,7 @@ class IWinHttp
 {
 public:
 	//设置超时时间，单位：毫秒
-	virtual void	SetTimeOut(int dwConnectTime,  int dwSendTime, int dwRecvTime)										= 0;		
+	virtual void	SetTimeOut(int dwConnectTime, int dwSendTime, int dwRecvTime) = 0;
 };
 
 
@@ -112,9 +113,9 @@ public:
 /////////////////////////////////////////////////////////////////////////////////
 //DLL的导出函数声明
 #ifdef _USRDLL//导出库
-		#define LIB_FUNCTION extern "C" __declspec(dllexport)
-	#else
-		#define LIB_FUNCTION extern "C" __declspec(dllimport)
+#define LIB_FUNCTION extern "C" __declspec(dllexport)
+#else
+#define LIB_FUNCTION extern "C" __declspec(dllimport)
 #endif
 /***********************************************************
 *声明导出函数部分

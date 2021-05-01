@@ -9,6 +9,7 @@
 
 CHttpSocket::CHttpSocket()
 	: m_socket(INVALID_SOCKET)
+	, m_nResponseCode(0)
 {
 	memset(&m_paramsData, 0, sizeof(HttpParamsData));
 }
@@ -115,12 +116,11 @@ bool CHttpSocket::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 					std::string strHeader;
 					strHeader.append((char*)pBuffer, nPos);
 					CHttpHeader header(strHeader);
-					int nHttpValue = header.GetReturnValue();
-					if (404 == nHttpValue)//文件不存在
-					{
+					m_nResponseCode = header.GetHttpCode();
+					if (m_nResponseCode == 400) {
 						throw HttpError404;
 					}
-					if (nHttpValue>300 && nHttpValue<400)//重定向
+					if (m_nResponseCode >300 && m_nResponseCode <400)//重定向
 					{
 						wstring strReLoadUrl = A2U(header.GetValue(HEADER_LOCATION));
 						if (strReLoadUrl.find(L"http://") != 0)
@@ -248,12 +248,11 @@ bool CHttpSocket::DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSi
 					throw HttpErrorHeader;
 				std::string strHeader(szHeader, nPos);
 				CHttpHeader header(strHeader);
-				int nHttpValue = header.GetReturnValue();
-				if (404 == nHttpValue)//文件不存在
-				{
+				m_nResponseCode = header.GetHttpCode();
+				if (m_nResponseCode == 400) {
 					throw HttpError404;
 				}
-				if (nHttpValue>300 && nHttpValue<400)//重定向
+				if (m_nResponseCode >300 && m_nResponseCode <400)//重定向
 				{
 					wstring reloadUrl = A2U(header.GetValue(HEADER_LOCATION));
 					if (reloadUrl.find(L"http://") != 0 && reloadUrl.find(L"https://") != 0)

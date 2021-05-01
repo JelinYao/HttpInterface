@@ -10,6 +10,7 @@ CWininetHttp::CWininetHttp(void)
 , m_hConnect(NULL)
 , m_hRequest(NULL)
 , m_bHttps(false)
+, m_nResponseCode(0)
 {
 	memset(&m_paramsData, 0, sizeof(HttpParamsData));
 }
@@ -52,12 +53,12 @@ string CWininetHttp::Request( LPCSTR lpUrl, HttpRequest type, LPCSTR lpPostData/
 		bRet = HttpSendRequestA(m_hRequest, lpHeader, dwHeaderSize, (LPVOID)lpPostData, dwSize);
 		if ( !bRet )
 			throw HttpErrorSend;
+		m_nResponseCode = QueryStatusCode();
+		if (m_nResponseCode == HTTP_STATUS_NOT_FOUND) {
+			throw HttpError404;
+		}
 		char szBuffer[READ_BUFFER_SIZE + 1] = { 0 };
 		DWORD dwReadSize = READ_BUFFER_SIZE;
-		if ( !HttpQueryInfoA(m_hRequest, HTTP_QUERY_RAW_HEADERS, szBuffer, &dwReadSize, NULL) )
-			throw HttpErrorQuery;
-		if ( NULL != strstr(szBuffer, "404") )
-			throw HttpError404;
 		while( true )
 		{
 			bRet = InternetReadFile(m_hRequest, szBuffer, READ_BUFFER_SIZE, &dwReadSize);
@@ -110,10 +111,10 @@ string CWininetHttp::Request( LPCWSTR lpUrl, HttpRequest type, LPCSTR lpPostData
 			throw HttpErrorSend;
 		char szBuffer[READ_BUFFER_SIZE+1]={0};
 		DWORD dwReadSize = READ_BUFFER_SIZE;
-		if (!HttpQueryInfoA(m_hRequest, HTTP_QUERY_RAW_HEADERS, szBuffer, &dwReadSize, NULL))
-			throw HttpErrorQuery;
-		if (NULL != strstr(szBuffer, "404"))
+		m_nResponseCode = QueryStatusCode();
+		if (m_nResponseCode == HTTP_STATUS_NOT_FOUND) {
 			throw HttpError404;
+		}
 		while (true)
 		{
 			bRet = InternetReadFile(m_hRequest, szBuffer, READ_BUFFER_SIZE, &dwReadSize);
@@ -162,11 +163,10 @@ bool CWininetHttp::DownloadFile(LPCWSTR lpUrl, LPCWSTR lpFilePath)
 		if ( !bRet ) throw HttpErrorSend;
 		char szBuffer[1024+1] = {0};
 		DWORD dwReadSize = 1024;
-		bRet = HttpQueryInfoA(m_hRequest, HTTP_QUERY_RAW_HEADERS, szBuffer, &dwReadSize, NULL);
-		if ( !bRet ) throw HttpErrorQuery;
-		string strRetHeader = szBuffer;
-		if ( string::npos != strRetHeader.find("404") ) throw HttpError404;
-		dwReadSize = 1024;
+		m_nResponseCode = QueryStatusCode();
+		if (m_nResponseCode == HTTP_STATUS_NOT_FOUND) {
+			throw HttpError404;
+		}
 		bRet = HttpQueryInfoA(m_hRequest, HTTP_QUERY_CONTENT_LENGTH, szBuffer, &dwReadSize, NULL);
 		if ( !bRet ) throw HttpErrorQuery;
 		szBuffer[dwReadSize] = '\0';
@@ -245,11 +245,10 @@ bool CWininetHttp::DownloadToMem( LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* n
 		if ( !bRet ) throw HttpErrorSend;
 		wchar_t szBuffer[1024+1] = {0};
 		DWORD dwReadSize = 1024;
-		bRet = HttpQueryInfoW(m_hRequest, HTTP_QUERY_RAW_HEADERS, szBuffer, &dwReadSize, NULL);
-		if ( !bRet ) throw HttpErrorQuery;
-		wstring strRetHeader(szBuffer);
-		if (string::npos != strRetHeader.find(L"404")) throw HttpError404;
-		dwReadSize = 1024;
+		m_nResponseCode = QueryStatusCode();
+		if (m_nResponseCode == HTTP_STATUS_NOT_FOUND) {
+			throw HttpError404;
+		}
 		bRet = HttpQueryInfoW(m_hRequest, HTTP_QUERY_CONTENT_LENGTH, szBuffer, &dwReadSize, NULL);
 		bool bHasLength = GetLastError() != ERROR_HTTP_HEADER_NOT_FOUND;
 		if (!bRet && bHasLength)
@@ -321,4 +320,16 @@ void CWininetHttp::Release()
 	ReleaseHandle(m_hRequest); 
 	ReleaseHandle(m_hConnect); 
 	ReleaseHandle(m_hSession);
+}
+
+int CWininetHttp::QueryStatusCode()
+{
+	int http_code = 0;
+	wchar_t szBuffer[24] = { 0 };
+	DWORD dwBufferSize = 24 * sizeof(wchar_t);
+	if(HttpQueryInfo(m_hRequest, HTTP_QUERY_STATUS_CODE, szBuffer, &dwBufferSize, NULL)) {
+		wchar_t *p = NULL;
+		http_code = wcstoul(szBuffer, &p, 10);
+	}
+	return http_code;
 }

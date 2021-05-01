@@ -20,11 +20,13 @@ public:
 	virtual	void FreeInstance() { delete this; }
 	virtual bool DownloadToMem(LPCWSTR lpUrl, OUT void** ppBuffer, OUT int* nSize);
 	virtual void AddHeader(LPCSTR key, LPCSTR value);
+	virtual int GetResponseCode() { return m_nResponseCode; }
 
 protected:
 	bool	InitSocket(const string& strHostName, const WORD sPort);
 
 private:
+	int m_nResponseCode;
 	SOCKET	m_socket;
 	wstring	m_strIpAddr;
 	CHttpHeader m_header;

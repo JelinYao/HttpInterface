@@ -19,6 +19,7 @@ public:
 	virtual void	SetDownloadCallback(IHttpCallback* pCallback, void* pParam);
 	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
 	virtual void AddHeader(LPCSTR key, LPCSTR value);
+	virtual int GetResponseCode() { return m_nResponseCode; }
 
 protected:
 	bool	Init();
@@ -31,8 +32,10 @@ protected:
 	//query 
 	bool	QueryRawHeaders(OUT wstring& strHeaders);
 	bool	QueryContentLength(OUT DWORD& dwLength);
+	int  QueryStatusCode();
 
 private:
+	int m_nResponseCode;
 	bool		m_bHttps;
 	HINTERNET	m_hInternet;
 	HINTERNET	m_hConnect;

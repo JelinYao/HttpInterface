@@ -17,13 +17,17 @@ public:
 	virtual HttpInterfaceError GetErrorCode() { return m_paramsData.errcode; }
 	virtual	void	FreeInstance() { delete this; }
 	virtual void AddHeader(LPCSTR key, LPCSTR value);
+	virtual int GetResponseCode() { return m_nResponseCode; }
 	
 protected:
 	//¹Ø±Õ¾ä±ú
 	void	ReleaseHandle(HINTERNET& hInternet);
 	void	Release();
 
+	int QueryStatusCode();
+
 private:
+	int m_nResponseCode;
 	bool		m_bHttps;
 	HINTERNET	m_hSession;
 	HINTERNET	m_hConnect;
